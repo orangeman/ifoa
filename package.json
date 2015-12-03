@@ -11,8 +11,9 @@
   },
   "devDependencies": {},
   "scripts": {
+    "postinstall": "coffee -c server.coffee && browserify -t coffeeify index.coffee > index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "browserify -t coffeeify index.coffee > index.js && coffee server.coffee"
+    "start": "node server.js"
   },
   "keywords": [
     "ridematching",
