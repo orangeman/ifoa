@@ -1,0 +1,26 @@
+{
+  "name": "abgefahren",
+  "version": "0.1.0",
+  "description": "",
+  "main": "fun.js",
+  "dependencies": {
+    "coffeeify": "^1.1.0",
+    "level": "^1.3.0",
+    "through2": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "browserify -t coffeeify index.coffee > index.js && coffee server.coffee"
+  },
+  "keywords": [
+    "ridematching",
+    "ridesharing"
+  ],
+  "engines": {
+    "node": "5.1.0",
+    "npm": "3.3.12"
+  },
+  "author": "orangeman",
+  "license": "apache license v2"
+}
