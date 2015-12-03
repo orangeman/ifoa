@@ -18,6 +18,5 @@ http.createServer (req, res) ->
     .on "data", (p) ->
       places.push p.key.split("!")[1]
     .on "end", () ->
-      json = words: places
       res.end places.join(',')
 .listen process.env.PORT || 5000
