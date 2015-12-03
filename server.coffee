@@ -20,4 +20,4 @@ http.createServer (req, res) ->
     .on "end", () ->
       json = words: places
       res.end places.join(',')
-.listen 80
+.listen 3000
