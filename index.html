@@ -1,86 +1,41 @@
 <html>
 
   <head>
-
-    <title>abgefahren</title
+    <title>abgefahren</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.2.0/united/bootstrap.min.css">
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
   </head>
+
 
   <body>
 
     <div id="search">
-
-      <div class="place_picker" id="orig">
-        <input type="text" id="from" placeholder="Start"/>
+      <div class="place" id="orig">
+        <input type="text" placeholder="Start"/>
         <span class="suggest"></span>
       </div>
-
-      <div class="place_picker" id="dest">
-        <input type="text" id="to" placeholder="Ziel"/>
+      <div class="place" id="dest">
+        <input type="text" placeholder="Ziel"/>
         <span class="suggest"></span>
       </div>
     </div>
 
-      <style>
-        * {
-          box-sizing: border-box;
-        }
-        body {
-          width: 100%;
-          padding: 0;
-          margin: 0;
-        }
-        h1 {
-          font-size: 3em;
-          margin-bottom: .5em;
-        }
-        input[type=text] {
-          font-size: 5em;
-          padding: 0.2em;
-          width: 100%;
-        }
-        #search {
-          width: 100%;
-        }
-        .place_picker {
-          position: relative;
-          padding: 2em;
-          width: 50%;
-        }
-        #orig {
-          float: left;
-        }
-        #dest {
-          float: right;
-        }
+    <div id="results">
+      <table>
+        <thead>
+          <tr>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Detour</th>
+          </tr>
+        <thead>
+        <tbody id="rides" />
 
-        a {
-          margin-bottom: 0px
-        }
-        .suggest a {
-          display: block;
-          font-size: 1.5em;
-          padding: 0.3em;
-          border-bottom: 1px solid #bdc3c7;
-          border-left: 1px solid #bdc3c7;
-          border-right: 1px solid #bdc3c7;
-          color: #2c3e50;
-          text-decoration: none;
-        }
-        .even {
-          background-color: #ecf0f1;
-          color: #27ae60;
-        }
-        .suggest a#active, .suggest a:hover {
-          background-color: #27ae60;
-          color: white;
-        }
-      </style>
-
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-
-      <script src="index.js"></script>
-
+      </table>
+    </div>
+    <script src='/tablesort.min.js'></script>
+    <script src="/jquery.min.js"></script>
+    <script src="/index.js?n=8"></script>
   </body>
 </html>
