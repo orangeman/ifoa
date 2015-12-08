@@ -66,6 +66,9 @@ td {
   font-size: 2em;
   padding: 0.42em, 0em, 0em, 0em;
 }
+.time {
+  font-size: 0.1em;
+}
 th.sort-header::-moz-selection { background:transparent; }
 th.sort-header::selection      { background:transparent; }
 th.sort-header {

@@ -1,8 +1,7 @@
-hyperspace = require "hyperspace"
-html = require("fs").readFileSync "ride.html"
 
-module.exports = () ->
-  hyperspace html.toString(), (r) ->
-    '.detour': r.det,
-    '.orig': r.from,
-    '.dest': r.to
+module.exports = (r) ->
+  '.ride': id: r.time
+  '.time': r.time
+  '.detour': r.det
+  '.orig': r.from
+  '.dest': r.to

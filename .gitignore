@@ -1,2 +1,4 @@
 node_modules/
-*.js
+ride.js
+server.js
+public/index.js
