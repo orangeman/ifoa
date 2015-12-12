@@ -46,8 +46,12 @@ a {
   background-color: #ecf0f1;
   color: #27ae60;
 }
-.suggest a#active, .suggest a:hover {
+.suggest a#active {
   background-color: #27ae60;
+  color: white;
+}
+.suggest a:hover {
+  background-color: #bdc3c7;
   color: white;
 }
 
@@ -67,8 +71,24 @@ td {
   padding: 0.42em, 0em, 0em, 0em;
 }
 .time {
-  font-size: 0.1em;
+  font-size: 0.15em;
 }
+.pickup {
+  font-size: 2em;
+}
+.who {
+  font-size: 0.9em;
+}
+.orig, .dest {
+  font-size: 1.7em;
+}
+.dist {
+  font-size: 0.7em;
+}
+.detour {
+  font-size: 2.3em;
+}
+
 th.sort-header::-moz-selection { background:transparent; }
 th.sort-header::selection      { background:transparent; }
 th.sort-header {

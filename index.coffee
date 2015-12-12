@@ -7,14 +7,14 @@ es = require "event-stream"
 css = require "./ride"
 shoe = require "shoe"
 HOST = window.location.origin
-html = require("fs").readFileSync("ride.html").toString()
+rideHtml = require("fs").readFileSync("ride.html").toString()
 search = null
 
 
 $ () ->
   console.log window.location.pathname
-  orig = autosuggest $("#orig")
   dest = autosuggest $("#dest")
+  orig = autosuggest $("#orig")
   time = $(".time").last().html()
   sort = tablesort $("table")[0]
   console.log "time " + time
@@ -23,6 +23,7 @@ $ () ->
   (stream = shoe "/sockjs")
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
+    console.log JSON.stringify ride
     if !time || ride.time > time
       time = ride.time
       console.log time
@@ -30,11 +31,11 @@ $ () ->
       console.log "DELETE " + ride.time
       $("#" + ride.time).remove()
       return next()
-    rides.appendChild hyperglue(html, css ride)
-    sort.refresh()
+    rides.appendChild hyperglue(rideHtml, css ride)
+    #sort.refresh()
     next()
   .onclose = () -> console.log "CLOSE"
-  console.log time
+  console.log "time " + time
   stream.write $(location).attr('pathname') + "#" + (time ||= 1)
 
   search = () ->
@@ -44,6 +45,7 @@ $ () ->
       console.log "path " + window.location.pathname + "#0"
       stream.write query + "#0"
       $("#rides").html ""
+
 
 autosuggest = (div) ->
   div.find("input").focus();
@@ -55,6 +57,7 @@ autosuggest = (div) ->
     caret = name.length
     div.find("input").val name
     div.find(".suggest").html ""
+    index = 0
     places = []
     search()
   div.on "click", ".sug", (p) ->
@@ -64,6 +67,10 @@ autosuggest = (div) ->
     k = e.keyCode;
     console.log "key  " + k
     text = div.find("input").val().trim();
+    if k == 27 # esc
+      div.find(".suggest").hide()
+    else
+      div.find(".suggest").show()
     if k == 37 # left
       caret = caret - 1
       if caret < 0
@@ -71,11 +78,13 @@ autosuggest = (div) ->
     else if k == 39 # right
       caret = caret + 1
       if caret > text.length
+        div.find(".suggest").hide()
         $("#dest").find("input").focus()
     else if k == 40 || k == 32 # up
       index = index + 1
     else if k == 38 # down
       index = index - 1
+      index = -1 if index < -1
     else if k == 13 # enter
       return select text + places[index]
     else
@@ -100,4 +109,7 @@ autosuggest = (div) ->
 
   active = (count) -> if count == index then 'active' else ''
   oddEven = (count) -> if count % 2 == 0 then 'even' else 'odd'
-  () -> div.find("input").val().trim()
+
+  titleCase = (str) ->
+    str[0].toUpperCase() + str[1..str.length-1]
+  () -> titleCase div.find("input").val().trim()
