@@ -80,9 +80,10 @@ autosuggest = (div) ->
       if caret > text.length
         div.find(".suggest").hide()
         $("#dest").find("input").focus()
-    else if k == 40 || k == 32 # up
+    else if k == 40 || k == 32
       index = index + 1
-    else if k == 38 # down
+      index = places.length - 1 if index >= places.length
+    else if k == 38
       index = index - 1
       index = -1 if index < -1
     else if k == 13 # enter
@@ -106,10 +107,13 @@ autosuggest = (div) ->
     return if err
     count = -1
     places = names
-    html = places.map (place) ->
-      count = count + 1
-      "<a href='#' class='sug #{oddEven count}' id='#{active count}' >#{text + place}</a>"
-    div.find(".suggest").html html.join('')
+    if names[0] == ""
+      div.find(".suggest").html ""
+    else
+      html = places.map (place) ->
+        count = count + 1
+        "<a href='#' class='sug #{oddEven count}' id='#{active count}' >#{text + place}</a>"
+      div.find(".suggest").html html.join('')
 
   active = (count) -> if count == index then 'active' else ''
   oddEven = (count) -> if count % 2 == 0 then 'even' else 'odd'
