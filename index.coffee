@@ -57,7 +57,7 @@ autosuggest = (div) ->
     caret = name.length
     div.find("input").val name
     div.find(".suggest").html ""
-    index = 0
+    index = -1
     places = []
     search()
   div.on "click", ".sug", (p) ->
@@ -86,7 +86,11 @@ autosuggest = (div) ->
       index = index - 1
       index = -1 if index < -1
     else if k == 13 # enter
-      return select text + places[index]
+      if index == -1
+        div.find(".suggest").hide()
+        return search()
+      else
+        return select text + places[index]
     else
       caret = text.length
       if k == 8 # backspace (delete a character)
