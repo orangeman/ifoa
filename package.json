@@ -23,7 +23,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "postinstall": "rm -r data/rides && coffee -c server.coffee ride.coffee dist.coffee && browserify -t coffeeify -t brfs index.coffee > public/index.js",
+    "postinstall": "coffee -c server.coffee ride.coffee dist.coffee && browserify -t coffeeify -t brfs index.coffee > public/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },

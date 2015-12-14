@@ -24,3 +24,7 @@ module.exports = () ->
       dist to, from, done
     else
       done 0
+
+# alternate names
+# min dist between cities
+# score route -> dauer insereriert route for all users

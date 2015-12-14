@@ -9,11 +9,24 @@ through = require "through2"
 JSONStream = require "JSONStream"
 hyperstream = require "hyperstream"
 ecstatic = require("ecstatic")(__dirname + "/public", cache: "no-cache")
-html = require("fs").readFileSync "ride.html"
+html = require("fs").readFileSync("ride.html").toString()
 distance = require "./dist"
 render = require "./ride"
+nextTime = 9999999999999999
+EXPIRE = 7000
 
 server = http.createServer (req, response) ->
+  if req.method == "POST"
+    console.log "post"
+    req.on "data", (r) ->
+      ride = JSON.parse r
+      ride.url = "nada"
+      ride.route = "/" + ride.from + "/" + ride.to
+      post ride, EXPIRE
+      insert ride, 9999999999999999, (latest) ->
+        response.writeHead 200, "Content-Type": "text/json"
+        response.end JSON.stringify ride
+    return
   if req.url == "/"
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
@@ -23,13 +36,11 @@ server = http.createServer (req, response) ->
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
     .pipe hyperstream
-      '#rides': cache(decodeURI m[1]).pipe through.obj (r, enc, next) ->
-        ride = r.value
-        return next() if ride.del
-        hyperstream render ride
-        .pipe es.map (h, next) =>
-          this.push h; next()
-        .on "end", () -> next()
+      '#rides': cache(decodeURI m[1]).pipe through.obj (ride, enc, next) ->
+        return next() if ride.key.match /#latest/
+        hyperstream render ride.value
+        .on "data", (d) => this.push d
+        .on "end", next
         .end html
     .pipe response
   else if q = req.url.match /q=(.*)/
@@ -40,7 +51,7 @@ server = http.createServer (req, response) ->
 socket = {}
 
 shoe (sockjs) ->
-  session = sockjs._session.connection.pathname
+  session =
   query = null
   sockjs.on "data", (url) ->
     console.log "OPEN " + url
@@ -48,52 +59,86 @@ shoe (sockjs) ->
       remove query
     m = decodeURI(url).match /(\/(.*)\/(.*))#(\d*)/
     return unless m
-    query = route: m[1], from: m[2], to: m[3], time: new Date().getTime()
+    query = route: m[1], from: m[2], to: m[3]
+    query.url = sockjs._session.connection.pathname
+    socket[query.url] = sockjs
     if query.from.length > 0 && query.to.length > 0
-      insert query, sockjs, m[4]
+      post query
+      insert query, m[4], (latest) ->
+        search query, latest + 1
+        .pipe sockjs, end: false
+      .pipe sockjs, end: false
   sockjs.on "close", () ->
     console.log "\nCLOSE " + session
-    remove query if query
+    if query
+      query.del = true
+      remove query
 .installHandlers server, prefix: "/sockjs"
 
 server.listen process.env.PORT || 5000
 
+clean = (t) ->
+  () ->
+    now = new Date().getTime()
+    console.log "CLEAN " + now + " - " + t
+    rides.createReadStream(gt: (now - t) + "/", lt: "a")
+    .on "end", () -> nextTime = 9999999999999999
+    .pipe through.obj (r, enc, next) ->
+      ride = r.value
+      console.log "consider " + JSON.stringify ride
+      if ride.time - now < 3000
+        if ride.del
+          remove ride
+        else
+          console.log "no clean up " + JSON.stringify ride
+      else
+        nextTime = ride.time
+        console.log "schedule " + (nextTime - now)
+        setTimeout clean, ride.time - now
+        this.destroy()
+      next()
+setTimeout clean(1000 * 1000), 1000
 
 rides = level "./data/rides", valueEncoding: "json"
+post = (ride, expire) ->
+  now = new Date().getTime()
+  if !ride.time || ride.time < now
+    ride.time = now
+  rides.put ride.time + ride.route, ride
+  if expire
+    rides.put ride.time + expire, del: true, time: ride.time, route: ride.route, url: ride.url
+    if ride.time + expire < nextTime
+      nextTime = ride.time + expire
+      console.log "schedule " + (nextTime - now)
+      setTimeout clean(1000), nextTime - now
 
-insert = (query, sockjs, after) ->
+insert = (query, after, done) ->
   console.log "INSERT " + query.time + query.route
-  rides.put query.time + query.route, query
-  socket[query.time + query.route] = sockjs
   cache query.route
-  .pipe notifyAbout query, after, (latest) ->
-    search latest + 1
-    .pipe match query
-    .pipe notifyAbout query, 0
-    .pipe(JSONStream.stringify(false), end: false)
-    .pipe sockjs, end: false
+  .pipe notifyAbout query, after, done
   .pipe(JSONStream.stringify(false), end: false)
-  .pipe sockjs, end: false
-  #sockjs.write "\n{ \"time\": \"1449506492402\", \"from\": \"debug\", \"to\": \"debug\", \"det\": 78, \"session\": \"/sockjs/874/lr2x3pcr/websocket\" }\n"
+
+search = (query, since) ->
+  fresh since
+  .pipe match query
+  .pipe notifyAbout query, 1
+  .pipe(JSONStream.stringify(false), end: false)
 
 remove = (query) ->
   console.log "REMOVE " + query.time + "/" + query.route
-  query.del = true
-  rides.put new Date().getTime() + query.route, query
   cache query.route
   .pipe match query
-  .pipe notifyAbout query, 9999999999999999
+  .pipe notifyAbout query
   .on "end", () ->
     console.log "removed.\n"
 
 cache = (route) ->
-  latest = 0
   console.log " :: cache " + route
   rides.createReadStream(gt: route + ">", lt: route+">~")
 
-search = (since) ->
+fresh = (since) ->
   console.log " :: search  since " + since
-  rides.createReadStream(gt: since + "/", lt: "a", reverse: true)
+  rides.createReadStream(gt: since + "/", lt: new Date().getTime() + "/", reverse: true)
 
 DET = 300
 match = (q) ->
@@ -155,6 +200,7 @@ match = (q) ->
 
 notifyAbout = (q, after, done) ->
   latest = 0
+  after = 9999999999999999 if !after
   es.map (ride, next) ->
     if ride.key.match /#latest/
       latest = ride.value
@@ -170,17 +216,19 @@ notifyAbout = (q, after, done) ->
     q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
     q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
     if r.time != q.time
-      if sock = socket[r.time + "/" + r.from + "/" + r.to]
-        console.log "     NOTIFY " + r.time + "/" + r.from + "/" + r.to
-        sock.write JSON.stringify(q) + "\n"
-        console.log "   + MATCH " + "/" + r.from + "/" + r.to + " <--- " + q.route + "#" + q.time
-        rides.put "/" + r.from + "/" + r.to + ">" + q.route + "#" + q.time, q
-      else
-        console.log "     no socket "
-        console.log "   - UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-        rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-        socket[q.time + q.route].write JSON.stringify(del: true, time: r.time) + "\n"
-        return next()
+      if r.url.match /websocket/
+        if sock = socket[r.url]
+          console.log "     NOTIFY " + r.time + "/" + r.from + "/" + r.to
+          sock.write JSON.stringify(q) + "\n"
+          console.log "   + MATCH " + "/" + r.from + "/" + r.to + " <--- " + q.route + "#" + q.time
+          rides.put "/" + r.from + "/" + r.to + ">" + q.route + "#" + q.time, q
+        else
+          console.log "     no socket "
+          console.log "   - UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
+          rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
+          if q.url.match /websocket/
+            socket[q.url].write JSON.stringify(del: true, time: r.time) + "\n"
+          return next()
     else
       console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
       r.me = true
