@@ -66,7 +66,7 @@ shoe (sockjs) ->
     socket[query.url] = sockjs
     if query.from.length > 0 && query.to.length > 0
       post query
-      insert query, m[4], (latest) ->
+      insert query, parseInt(m[4]), (latest) ->
         search query, latest + 1
         .pipe sockjs, end: false
       .pipe sockjs, end: false
