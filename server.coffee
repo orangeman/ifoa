@@ -13,15 +13,15 @@ html = require("fs").readFileSync("ride.html").toString()
 distance = require "./dist"
 render = require "./ride"
 nextTime = 9999999999999999
-EXPIRE = 7000
+EXPIRE = 180 * 1000
 
 server = http.createServer (req, response) ->
   if req.method == "POST"
-    console.log "post"
     req.on "data", (r) ->
       ride = JSON.parse r
       ride.url = "nada"
       ride.route = "/" + ride.from + "/" + ride.to
+      console.log "\nPOST " + JSON.stringify ride
       post ride, EXPIRE
       insert ride, 9999999999999999, (latest) ->
         response.writeHead 200, "Content-Type": "text/json"
@@ -83,7 +83,7 @@ server.listen process.env.PORT || 5000
 clean = (t) ->
   () ->
     now = new Date().getTime()
-    console.log "CLEAN " + now + " - " + t
+    console.log "\nCLEAN " + now + " - " + t
     rides.createReadStream(gt: (now - t) + "/", lt: "a")
     .on "end", () -> nextTime = 9999999999999999
     .pipe through.obj (r, enc, next) ->
