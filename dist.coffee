@@ -28,3 +28,4 @@ module.exports = () ->
 # alternate names
 # min dist between cities
 # score route -> dauer insereriert route for all users
+# suggest name space split
