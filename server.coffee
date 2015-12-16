@@ -56,6 +56,8 @@ shoe (sockjs) ->
   sockjs.on "data", (url) ->
     console.log "OPEN " + url
     if query
+      query.del = true
+      rides.put new Date().getTime(), query
       remove query
     m = decodeURI(url).match /(\/(.*)\/(.*))#(\d*)/
     return unless m
@@ -72,6 +74,7 @@ shoe (sockjs) ->
     console.log "\nCLOSE " + session
     if query
       query.del = true
+      rides.put new Date().getTime(), query
       remove query
 .installHandlers server, prefix: "/sockjs"
 
