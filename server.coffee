@@ -71,6 +71,7 @@ shoe (sockjs) ->
       post query
       insert query, parseInt(m[4]), (latest) ->
         search query, latest + 1
+        .pipe(JSONStream.stringify(false), end: false)
         .pipe sockjs, end: false
       .pipe sockjs, end: false
   sockjs.on "close", () ->
@@ -128,7 +129,6 @@ search = (query, since) ->
   fresh since
   .pipe match query
   .pipe notifyAbout query, 1
-  .pipe(JSONStream.stringify(false), end: false)
 
 remove = (query) ->
   console.log "REMOVE " + query.time + query.route
