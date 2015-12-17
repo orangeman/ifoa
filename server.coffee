@@ -130,7 +130,7 @@ search = (query, since) ->
   .pipe(JSONStream.stringify(false), end: false)
 
 remove = (query) ->
-  console.log "REMOVE " + query.time + "/" + query.route
+  console.log "REMOVE " + query.time + query.route
   cache query.route
   .pipe match query
   .pipe notifyAbout query
@@ -232,7 +232,10 @@ notifyAbout = (q, after, done) ->
           console.log "   - UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
           rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
           if q.url.match /websocket/
-            socket[q.url].write JSON.stringify(del: true, time: r.time) + "\n"
+            if sock = socket[q.url]
+              socket[q.url].write JSON.stringify(del: true, time: r.time) + "\n"
+            else
+              console.log  "      no socket query"
           return next()
     else
       console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
