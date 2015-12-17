@@ -167,17 +167,13 @@ match = (q) ->
       console.log "     visited " + r.time
       visited[r.time] = true
       return next()
-    if r.del || q.del
+    if q.del
       this.push ride
+      visited[r.time] = true
       if ride.key.match /#del/
         return next()
-      visited[r.time] = true
-      if r.del
-        console.log "   - UNMATCH " + q.route + ">" + r.route + "#" + r.time
-        rides.del q.route + ">" + r.route + "#" + r.time
-      if q.del
-        console.log "   - UNMATCH " + r.route + ">" + q.route + "#" + q.time
-        rides.del r.route + ">" + q.route + "#" + q.time
+      console.log " <-- UNMATCH " + r.route + ">" + q.route + "#" + q.time
+      rides.del r.route + ">" + q.route + "#" + q.time
       return next()
     visited[r.time] = true
     det r, q, (pickup, join, dropoff, alone) =>
@@ -185,17 +181,23 @@ match = (q) ->
       detPassenger = pickup + alone + dropoff - join
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
-        r.dist = alone
-        r.pickup = pickup
-        r.dropoff = dropoff
-        if detDriver < detPassenger
-          r.driver = true
+        if r.del
+          console.log " --> UNMATCH " + q.route + ">" + r.route + "#" + r.time
+          rides.del q.route + ">" + r.route + "#" + r.time, (err) =>
+            this.push ride
+            next()
         else
-          r.passenger = true
-        console.log "   + MATCH " + q.route + " ---> " + r.from + "/" + r.to + "#" + r.time
-        rides.put q.route + ">/" + r.from + "/" + r.to + "#" + r.time, r, (err) =>
-          this.push ride
-          next()
+          r.dist = alone
+          r.pickup = pickup
+          r.dropoff = dropoff
+          if detDriver < detPassenger
+            r.driver = true
+          else
+            r.passenger = true
+          console.log " --> MATCH " + q.route + " ---> " + r.from + "/" + r.to + "#" + r.time
+          rides.put q.route + ">/" + r.from + "/" + r.to + "#" + r.time, r, (err) =>
+            this.push ride
+            next()
       else
         next()
   .on "end", () ->
@@ -223,13 +225,13 @@ notifyAbout = (q, after, done) ->
     if r.time != q.time
       if r.url.match /websocket/
         if sock = socket[r.url]
-          console.log "     NOTIFY " + r.time + "/" + r.from + "/" + r.to
+          console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.time
+          rides.put r.route + ">" + q.route + "#" + q.time, q
+          console.log "     NOTIFY " + r.time + "/" + r.route
           sock.write JSON.stringify(q) + "\n"
-          console.log "   + MATCH " + "/" + r.from + "/" + r.to + " <--- " + q.route + "#" + q.time
-          rides.put "/" + r.from + "/" + r.to + ">" + q.route + "#" + q.time, q
         else
           console.log "     no socket "
-          console.log "   - UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
+          console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
           rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
           if q.url.match /websocket/
             if sock = socket[q.url]
