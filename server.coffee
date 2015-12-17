@@ -24,8 +24,10 @@ server = http.createServer (req, response) ->
       console.log "\nPOST " + JSON.stringify ride
       post ride, EXPIRE
       insert ride, 9999999999999999, (latest) ->
-        response.writeHead 200, "Content-Type": "text/json"
-        response.end JSON.stringify ride
+        search ride, latest + 1
+        .on "end", () ->
+          response.writeHead 200, "Content-Type": "text/json"
+          response.end JSON.stringify ride
     return
   if req.url == "/"
     response.writeHead 200, "Content-Type": "text/html"
