@@ -173,11 +173,11 @@ match = (q) ->
         return next()
       visited[r.time] = true
       if r.del
-        console.log "   - UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-        rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
+        console.log "   - UNMATCH " + q.route + ">" + r.route + "#" + r.time
+        rides.del q.route + ">" + r.route + "#" + r.time
       if q.del
-        console.log "   - UNMATCH " + "/" + r.from + "/" + r.to + ">" + q.route + "#" + q.time
-        rides.del "/" + r.from + "/" + r.to + ">" + q.route + "#" + q.time
+        console.log "   - UNMATCH " + r.route + ">" + q.route + "#" + q.time
+        rides.del r.route + ">" + q.route + "#" + q.time
       return next()
     visited[r.time] = true
     det r, q, (pickup, join, dropoff, alone) =>
