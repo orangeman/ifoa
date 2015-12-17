@@ -223,9 +223,10 @@ notifyAbout = (q, after, done) ->
     if r.time != q.time
       if r.url.match /websocket/
         if sock = socket[r.url]
-          console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.time
-          rides.put r.route + ">" + q.route + "#" + q.time, q
-          console.log "     NOTIFY " + r.time + "/" + r.route
+          unless q.del
+            console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.time
+            rides.put r.route + ">" + q.route + "#" + q.time, q
+          console.log "     NOTIFY " + r.time + r.route
           sock.write JSON.stringify(q) + "\n"
         else
           console.log "     no socket "
