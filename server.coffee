@@ -40,6 +40,7 @@ server = http.createServer (req, response) ->
     fs.createReadStream __dirname + "/index.html"
     .pipe hyperstream
       '#rides': cache(decodeURI m[1]).pipe through.obj (ride, enc, next) ->
+        console.log "render #{ride.from}->#{ride.to}"
         return next() if ride.key.match /#latest/
         hyperstream render ride.value
         .on "data", (d) => this.push d
