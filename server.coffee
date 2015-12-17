@@ -165,7 +165,6 @@ match = (q) ->
     latest = r.time if r.time > latest
     if visited[r.time]
       console.log "     visited " + r.time
-      visited[r.time] = true
       return next()
     if q.del
       this.push ride
@@ -213,15 +212,14 @@ notifyAbout = (q, after, done) ->
       latest = ride.value
       return next()
     r = ride.value
-    if r.del
-      return next(null, del: true, time: r.time)
-    q.det = r.det
-    q.pickup = r.pickup
-    q.dropoff = r.dropoff
-    q.driver = true if r.passenger
-    q.passenger = true if r.driver
-    q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
-    q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
+    if !r.del
+      q.det = r.det
+      q.pickup = r.pickup
+      q.dropoff = r.dropoff
+      q.driver = true if r.passenger
+      q.passenger = true if r.driver
+      q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
+      q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
     if r.time != q.time
       if r.url.match /websocket/
         if sock = socket[r.url]
