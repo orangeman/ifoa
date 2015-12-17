@@ -26,6 +26,7 @@ server = http.createServer (req, response) ->
       insert ride, 9999999999999999, (latest) ->
         search ride, latest + 1
         .on "end", () ->
+          console.log "ENDETED"
           response.writeHead 200, "Content-Type": "text/json"
           response.end JSON.stringify ride
     return
