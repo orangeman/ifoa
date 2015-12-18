@@ -10,8 +10,14 @@ h1 {
   font-size: 3em;
   margin-bottom: .5em;
 }
+#frame {
+  position: relative;
+  z-index: 1;
+}
 #search {
+  position: absolute;
   width: 100%;
+  z-index: 3;
 }
 #orig {
   float: left;
@@ -42,6 +48,9 @@ a {
   color: #2c3e50;
   text-decoration: none;
 }
+.odd {
+  background-color: #fff;
+}
 .even {
   background-color: #ecf0f1;
   color: #27ae60;
@@ -56,6 +65,7 @@ a {
 }
 
 #results {
+  margin-top: 149px;
   width: 100%;
   float: left;
   padding: 2em;

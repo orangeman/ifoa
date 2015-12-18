@@ -9,34 +9,36 @@
 
 
   <body>
-
-    <div id="search">
-      <div class="place" id="orig">
-        <input type="text" placeholder="Start"/>
-        <span class="suggest"></span>
+    <div id="frame">
+        
+      <div id="search">
+        <div class="place" id="orig">
+          <input type="text" placeholder="Start"/>
+          <span class="suggest"></span>
+        </div>
+        <div class="place" id="dest">
+          <input type="text" placeholder="Ziel"/>
+          <span class="suggest"></span>
+        </div>
       </div>
-      <div class="place" id="dest">
-        <input type="text" placeholder="Ziel"/>
-        <span class="suggest"></span>
+
+      <div id="results">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Pickup</th>
+              <th></th>
+              <th>Origin</th>
+              <th></th>
+              <th>Destination</th>
+              <th>Detour</th>
+            </tr>
+          <thead>
+          <tbody id="rides" />
+
+        </table>
       </div>
-    </div>
-
-    <div id="results">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Pickup</th>
-            <th></th>
-            <th>Origin</th>
-            <th></th>
-            <th>Destination</th>
-            <th>Detour</th>
-          </tr>
-        <thead>
-        <tbody id="rides" />
-
-      </table>
     </div>
     <script src='/tablesort.min.js'></script>
     <script src="/jquery.min.js"></script>
