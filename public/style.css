@@ -74,7 +74,7 @@ td {
   font-size: 0.15em;
 }
 .pickup {
-  font-size: 1.9em;
+  font-size: 1.8em;
   white-space: nowrap;
 }
 .who {
@@ -85,9 +85,10 @@ td {
 }
 .dist {
   font-size: 0.7em;
+  white-space: nowrap;
 }
 .detour {
-  font-size: 2.3em;
+  font-size: 2.2em;
   white-space: nowrap;
 }
 
