@@ -6,9 +6,9 @@ duration = (dist) ->
   if min > 60
     h = Math.floor(min / 60)
     min = min % 60
-    "in #{h} h #{min} min"
+    "#{h} h #{min} min"
   else
-    "in #{min} min"
+    "#{min} min"
 
 who = (r) ->
   if r.me
@@ -26,5 +26,5 @@ who = (r) ->
 
 module.exports = (r) ->
   r.who = who r
-  r.pickup = duration r.pickup
+  r.pickupLabel = duration r.pickup
   mustache.render html, r
