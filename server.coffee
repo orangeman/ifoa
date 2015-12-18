@@ -165,6 +165,7 @@ match = (q) ->
     latest = r.time if r.time > latest
     if visited[r.time]
       console.log "     visited " + r.time
+      rides.del ride.key
       return next()
     if q.del
       this.push ride
