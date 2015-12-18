@@ -1,5 +1,5 @@
-
-
+html = require("fs").readFileSync("ride.html").toString()
+mustache = require "mustache"
 
 duration = (dist) ->
   min = Math.floor(dist * 0.6)
@@ -25,11 +25,6 @@ who = (r) ->
   label
 
 module.exports = (r) ->
-  '.ride': id: r.time
-  '.time': r.time
-  '.pickup': duration r.pickup
-  '.who': who r
-  '.orig': r.from
-  '.dest': r.to
-  '.dist': r.dist + " km"
-  '.detour': r.det + " km"
+  r.who = who r
+  r.pickup = duration r.pickup
+  mustache.render html, r

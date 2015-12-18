@@ -42,10 +42,8 @@ server = http.createServer (req, response) ->
       '#rides': cache(decodeURI m[1]).pipe through.obj (ride, enc, next) ->
         console.log "render #{ride.from}->#{ride.to}"
         return next() if ride.key.match /#latest/
-        hyperstream render ride.value
-        .on "data", (d) => this.push d
-        .on "end", next
-        .end html
+        this.push render ride.value
+        next()
     .pipe response
   else if q = req.url.match /q=(.*)/
     suggest(decodeURI(q[1])).pipe response

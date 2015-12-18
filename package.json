@@ -16,6 +16,7 @@
     "hyperstream": "^1.2.2",
     "level": "^1.3.0",
     "merge-stream": "^1.0.0",
+    "mustache": "^2.2.1",
     "request": "^2.67.0",
     "shoe": "0.0.15",
     "sockjs": "^0.3.15",

@@ -4,10 +4,9 @@ through = require "through2"
 request = require "request"
 hyperglue = require "hyperglue"
 es = require "event-stream"
-css = require "./ride"
+htmlize = require "./ride"
 shoe = require "shoe"
 HOST = window.location.origin
-rideHtml = require("fs").readFileSync("ride.html").toString()
 search = null
 
 
@@ -19,7 +18,7 @@ $ () ->
   sort = tablesort $("table")[0]
   console.log "time " + time
 
-  rides = $("#rides")[0]
+  rides = $("#rides")
   (stream = shoe "/sockjs")
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
@@ -31,7 +30,7 @@ $ () ->
       console.log "DELETE " + ride.time
       $("#" + ride.time).remove()
       return next()
-    rides.appendChild hyperglue(rideHtml, css ride)
+    rides.append htmlize ride
     #sort.refresh()
     next()
   .onclose = () -> console.log "CLOSE"
@@ -44,7 +43,7 @@ $ () ->
       history.replaceState {}, "", HOST + query
       console.log "path " + window.location.pathname + "#0"
       stream.write query + "#0"
-      $("#rides").html ""
+      rides.html ""
 
 
 autosuggest = (div) ->
