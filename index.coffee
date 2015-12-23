@@ -11,12 +11,11 @@ search = null
 
 
 $ () ->
-  console.log window.location.pathname
-  dest = autosuggest $("#dest")
-  orig = autosuggest $("#orig")
+  m = $(location).attr('pathname').match /\/(.*)\/(.*)/
+  dest = autosuggest $("#dest"), if m then decodeURI m[2] else ""
+  orig = autosuggest $("#orig"), if m then decodeURI m[1] else ""
   time = $(".time").last().html()
   sort = tablesort $("table")[0]
-  console.log "time " + time
 
   rides = $("#rides")
   (stream = shoe "/sockjs")
@@ -31,10 +30,11 @@ $ () ->
       $("#" + ride.time).remove()
       return next()
     rides.append htmlize ride
-    #sort.refresh()
+    sort.refresh()
     next()
   .onclose = () -> console.log "CLOSE"
   console.log "time " + time
+
   stream.write $(location).attr('pathname') + "#" + (time ||= 1)
 
   search = () ->
@@ -45,8 +45,18 @@ $ () ->
       stream.write query + "#0"
       rides.html ""
 
+  map = L.map("map").setView [48.505, 9.09], 10
+  L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}',
+  	attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  	subdomains: 'abcd',
+  	minZoom: 0,
+  	maxZoom: 20,
+  	ext: 'png'
+  ).addTo map
 
-autosuggest = (div) ->
+
+autosuggest = (div, def) ->
+  div.find("input").val def
   div.find("input").focus();
   places = []
   text = null

@@ -31,7 +31,7 @@ h1 {
   width: 50%;
 }
 input[type=text] {
-  font-size: 5em;
+  font-size: 4.2em;
   padding: 0.2em;
   width: 100%;
 }
@@ -65,10 +65,13 @@ a {
 }
 
 #results {
-  margin-top: 149px;
-  width: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  position: absolute;
+  margin-top: 130px;
+  width: 61.803%;
   float: left;
-  padding: 2em;
+  padding: 1em;
+  z-index: 2;
 }
 table {
   width:100%;
@@ -76,29 +79,38 @@ table {
 #rides {
   width:100%;
 }
+th {
+  color: #CCCCCC;
+}
 td {
+  padding: 0.2em;
   font-size: 2em;
+  color: #DDDDDD;
   padding: 0.42em, 0em, 0em, 0em;
 }
 .time {
   font-size: 0.15em;
 }
 .pickup {
-  font-size: 1.8em;
+  font-size: 1em;
   white-space: nowrap;
 }
 .who {
-  font-size: 0.9em;
+  font-size: 0.7em;
+  width: 2em;
 }
 .orig, .dest {
-  font-size: 1.7em;
+  font-size: 1.4em;
+  font-weight: bold;
 }
 .dist {
+  width: 0.3em;
   font-size: 0.7em;
   white-space: nowrap;
 }
 .detour {
-  font-size: 2.2em;
+  font-size: 2em;
+  font-weight: bold;
   white-space: nowrap;
 }
 
@@ -132,4 +144,10 @@ table th.sort-down:hover:after {
 table th.sort-up:after {
   border-bottom:none;
   border-width:4px 4px 0;
+}
+
+#map {
+  position: fixed;
+  height: 100%;
+  width: 100%;
 }
