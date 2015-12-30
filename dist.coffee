@@ -4,7 +4,7 @@ level = require "level"
 db = level "./data/dist"
 
 distance = (from, to, done) ->
-  db.get from + ">" + to, (e, d) -> done parseInt d
+  db.get (from + to).toUpperCase(), (e, d) -> done parseInt d
 
 module.exports = () ->
   distCache = {}
