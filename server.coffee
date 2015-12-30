@@ -15,6 +15,7 @@ render = require "./ride"
 nextTime = 9999999999999999
 EXPIRE = 180 * 1000
 
+
 server = http.createServer (req, response) ->
   if req.method == "POST"
     req.on "data", (r) ->
@@ -222,7 +223,7 @@ notifyAbout = (q, after, done) ->
       q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
       q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
     if r.time != q.time
-      if r.url.match /websocket/
+      if r.url.match /sockjs/
         if sock = socket[r.url]
           unless q.del
             console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.time
@@ -233,7 +234,7 @@ notifyAbout = (q, after, done) ->
           console.log "     no socket "
           console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
           rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-          if q.url.match /websocket/
+          if q.url.match /sockjs/
             if sock = socket[q.url]
               socket[q.url].write JSON.stringify(del: true, time: r.time) + "\n"
             else
