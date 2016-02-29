@@ -88,6 +88,10 @@ td {
   color: #DDDDDD;
   padding: 0.42em, 0em, 0em, 0em;
 }
+tr:hover {
+  cursor: pointer;
+  background-color: #000000;
+}
 .time {
   font-size: 0.15em;
 }
