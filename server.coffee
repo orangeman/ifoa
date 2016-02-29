@@ -17,35 +17,51 @@ EXPIRE = 180 * 1000
 
 
 server = http.createServer (req, response) ->
+  console.log req.url
   if req.method == "POST"
     req.on "data", (r) ->
       ride = JSON.parse r
       ride.url = "nada"
       ride.route = "/" + ride.from + "/" + ride.to
       console.log "\nPOST " + JSON.stringify ride
-      post ride, EXPIRE
+      ride = post ride, ride.expire || EXPIRE
       insert ride, 9999999999999999, (latest) ->
         search ride, latest + 1
         .on "end", () ->
           console.log "ENDETED"
-          response.writeHead 200, "Content-Type": "text/json"
+          response.writeHead 200, "Content-Type": "application/json"
           response.end JSON.stringify ride
     return
   if req.url == "/"
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
     .pipe response
+  else if m = req.url.match /rides\/(.*)/
+    console.log "ID = " + m[1]
+    response.writeHead 200, "Content-Type": "application/json"
+    rides.createReadStream gte: "id:" + m[1], lt: "id:" + m[1] + "~"
+    .pipe es.mapSync (p) -> JSON.stringify p.value
+    .pipe response
   else if m = req.url.match /(\/.*\/.*)/
     console.log "\nGET" + req.url + "  " +  req.connection.remoteAddress + "   " + decodeURI m[1]
-    response.writeHead 200, "Content-Type": "text/html"
-    fs.createReadStream __dirname + "/index.html"
-    .pipe hyperstream
-      '#rides': cache(decodeURI m[1]).pipe through.obj (ride, enc, next) ->
-        console.log "render #{ride.from}->#{ride.to}"
-        return next() if ride.key.match /#latest/
-        this.push render ride.value
-        next()
-    .pipe response
+    if req.headers.accept && req.headers.accept == "application/json"
+      console.log "JSON"
+      response.writeHead 200, "Content-Type": "application/json"
+      cache(decodeURI m[1]).pipe es.map (ride, cb) ->
+        return cb() if ride.key.match /#latest/
+        cb null, ride.value
+      .pipe es.writeArray (err, rides) ->
+        response.end JSON.stringify rides
+    else
+      response.writeHead 200, "Content-Type": "text/html"
+      fs.createReadStream __dirname + "/index.html"
+      .pipe hyperstream
+        '#rides': cache(decodeURI m[1]).pipe through.obj (ride, enc, next) ->
+          return next() if ride.key.match /#latest/
+          console.log "render #{ride.value.from}->#{ride.value.to}"
+          this.push render ride.value
+          next()
+      .pipe response
   else if q = req.url.match /q=(.*)/
     suggest(decodeURI(q[1])).pipe response
   else
@@ -68,7 +84,7 @@ shoe (sockjs) ->
     query.url = sockjs._session.connection.pathname
     socket[query.url] = sockjs
     if query.from.length > 0 && query.to.length > 0
-      post query
+      query = post query
       insert query, parseInt(m[4]), (latest) ->
         search query, latest + 1
         .pipe(JSONStream.stringify(false), end: false)
@@ -81,8 +97,6 @@ shoe (sockjs) ->
       rides.put new Date().getTime(), query
       remove query
 .installHandlers server, prefix: "/sockjs"
-
-server.listen process.env.PORT || 5000
 
 clean = (t) ->
   () ->
@@ -101,26 +115,45 @@ clean = (t) ->
       else
         nextTime = ride.time
         console.log "schedule " + (nextTime - now)
-        setTimeout clean, ride.time - now
+        setTimeout clean, nextTime - now
         this.destroy()
       next()
-setTimeout clean(1000 * 1000), 1000
+
+module.exports.start = (callback) ->
+  server.listen process.env.PORT || 5000
+  setTimeout clean(1000 * 1000), 1000
+  setTimeout callback, 1111
+module.exports.start()
+
+module.exports.stop = (callback) ->
+  server.close()
+  callback()
+
+uid = ->
+  'xxxxxxxxxxx'.replace(/[xy]/g, (c) ->
+    r = Math.random() * 16 | 0
+    v = if c is 'x' then r else (r & 0x3|0x8)
+    v.toString(16)
+  )
 
 rides = level "./data/rides", valueEncoding: "json"
 post = (ride, expire) ->
+  ride.id = uid()
   now = new Date().getTime()
   if !ride.time || ride.time < now
     ride.time = now
+  rides.put "id:" + ride.id, ride
   rides.put ride.time + ride.route, ride
   if expire
-    rides.put ride.time + expire, del: true, time: ride.time, route: ride.route, url: ride.url
+    rides.put ride.time + expire, del: true, id: ride.id, time: ride.time + expire, route: ride.route, url: ride.url
     if ride.time + expire < nextTime
       nextTime = ride.time + expire
       console.log "schedule " + (nextTime - now)
       setTimeout clean(1000), nextTime - now
+  ride
 
 insert = (query, after, done) ->
-  console.log "INSERT " + query.time + query.route
+  console.log "INSERT " + "id:" + query.id + " :: " + query.time + query.route
   cache query.route
   .pipe notifyAbout query, after, done
   .pipe(JSONStream.stringify(false), end: false)
@@ -131,7 +164,8 @@ search = (query, since) ->
   .pipe notifyAbout query, 1
 
 remove = (query) ->
-  console.log "REMOVE " + query.time + query.route
+  console.log "REMOVE " + query.id + " :: " + query.time + query.route
+  rides.put "id:" + query.id, status: 'deleted'
   cache query.route
   .pipe match query
   .pipe notifyAbout query
