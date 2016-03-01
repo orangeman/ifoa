@@ -69,18 +69,18 @@ $ () ->
   showMap = (p) ->
     points = []
     map.eachLayer (l) -> map.removeLayer l unless l.getAttribution
-    who = $(this).siblings(".who").html()
     from = $(this).siblings(".orig").html()
     to = $(this).siblings(".dest").html()
     pickup = orig()
     dropoff = dest()
-    console.log who
     drawPath from, pickup, color: "#004565", weight: 7, dashArray:"1, 10", opacity: 1
     drawPath dropoff, to, color: "#004565", weight: 7, dashArray:"1, 10", opacity: 1
-    if who == "DRIVER"
+    if $(this).siblings(".driver").length
+      console.log "driver"
       drawPath from, to, color: "#004565", weight: 10, opacity: 1
       drawPath pickup, dropoff, color: "#ffcc00", weight: 3, opacity: 1
     else
+      console.log "passenger"
       drawPath pickup, dropoff, color: "#004565", weight: 10, opacity: 1
       drawPath from, to, color: "#ffcc00", weight: 3, opacity: 1
 
@@ -97,7 +97,6 @@ $ () ->
         panAndZoom points
     else
       getPath from, to, (pois) ->
-        console.log "DRAW " + from + " -> " + to
         l = L.geoJson().addTo map
         l.options = style: style
         l.addData "type": "LineString", "coordinates": pois
@@ -108,18 +107,14 @@ $ () ->
   paths = {}
   getPath = (from, to, done) ->
     if paths[from+to]
-      console.log "cache"
       done decode paths[from+to]
     else
-      console.log "load"
       request.get HOST + "/paths/" + encodeURI(from) + "/" + encodeURI(to)
       .pipe es.mapSync (p) ->
-        console.log "got " + p.toString()
         paths[from+to] = p.toString()
         done decode p.toString()
 
   panAndZoom = (points) ->
-    console.log "ZOOMERNG"
     bbx = [[99999999, 99999999], [0, 0]]
     for pois in points
       for l in pois
@@ -132,13 +127,10 @@ $ () ->
       width = bbx[1][1] - bbx[0][1]
       height = bbx[1][0] - bbx[0][0]
       screen = b.getEast() - b.getWest()
-      console.log width + " x " + height + " screen " + screen
       if height > width / 2
-        console.log "VERTICAL"
         bbx[1][1] = (b.getEast() - screen / 3.2)
         bbx[0][1] = (b.getWest() - screen / 3.2)
       else
-        console.log "HORIZONTAL"
         bbx[0][1] = (b.getWest() - screen * 2.3)
       map.fitBounds bbx
     map.fitBounds bbx
