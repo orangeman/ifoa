@@ -15,6 +15,7 @@ render = require "./ride"
 nextTime = 9999999999999999
 EXPIRE = 180 * 1000
 
+paths = level "./data/path"
 
 server = http.createServer (req, response) ->
   console.log req.url
@@ -35,6 +36,13 @@ server = http.createServer (req, response) ->
   if req.url == "/"
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
+    .pipe response
+  else if m = req.url.match /paths\/(.*)\/(.*)/
+    response.writeHead 200, "Content-Type": "application/json"
+    key = if m[1] < m[2] then m[1] + m[2] else m[2] + m[1]
+    key = decodeURI(key).toUpperCase()
+    console.log decodeURI key
+    paths.createValueStream gte: key, lte: key
     .pipe response
   else if m = req.url.match /rides\/(.*)/
     console.log "ID = " + m[1]
@@ -119,15 +127,9 @@ clean = (t) ->
         this.destroy()
       next()
 
-module.exports.start = (callback) ->
-  server.listen process.env.PORT || 5000
-  setTimeout clean(1000 * 1000), 1000
-  setTimeout callback, 1111
-module.exports.start()
+server.listen process.env.PORT || 5000
+setTimeout clean(1000 * 1000), 1000
 
-module.exports.stop = (callback) ->
-  server.close()
-  callback()
 
 uid = ->
   'xxxxxxxxxxx'.replace(/[xy]/g, (c) ->

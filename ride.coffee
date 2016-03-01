@@ -26,5 +26,7 @@ who = (r) ->
 
 module.exports = (r) ->
   r.who = who r
+  r.who_css = r.who.toLowerCase()
+  r.dist_css = "dist_" + r.who_css
   r.pickupLabel = duration r.pickup
   mustache.render html, r

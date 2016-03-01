@@ -40,8 +40,8 @@
           return cb(JSON.parse(res));
         }).end(JSON.stringify(ride));
       };
-      t.test.get = function(id, cb) {
-        return request("http://localhost:5000/rides/" + id, function(err, r, res) {
+      t.test.get = function(path, cb) {
+        return request("http://localhost:5000" + path, function(err, r, res) {
           return cb(JSON.parse(res));
         });
       };

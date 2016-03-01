@@ -16,7 +16,7 @@ h1 {
 }
 #search {
   position: absolute;
-  width: 100%;
+  width: 61.803%;
   z-index: 3;
 }
 #orig {
@@ -67,9 +67,10 @@ a {
 #results {
   background-color: rgba(0, 0, 0, 0.85);
   position: absolute;
-  margin-top: 130px;
+  margin-top: 150px;
   width: 61.803%;
   float: left;
+  padding-top: 20px;
   padding: 1em;
   z-index: 2;
 }
@@ -96,24 +97,50 @@ tr:hover {
   font-size: 0.15em;
 }
 .pickup {
+  width 0.7em;
   font-size: 1em;
+  text-align: right;
   white-space: nowrap;
+  padding-right: 30px;
 }
-.who {
+.mich {
   font-size: 0.7em;
+  width: 2em;
+}
+.driver {
+  font-size: 0.7em;
+  color: #004565;
+  width: 2em;
+}
+.passenger {
+  font-size: 0.7em;
+  color: #ffcc00;
   width: 2em;
 }
 .orig, .dest {
   font-size: 1.4em;
   font-weight: bold;
 }
-.dist {
+.dist_mich {
   width: 0.3em;
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+.dist_driver {
+  width: 0.3em;
+  color: #004565;
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+.dist_passenger {
+  width: 0.3em;
+  color: #ffcc00;
   font-size: 0.7em;
   white-space: nowrap;
 }
 .detour {
   font-size: 2em;
+  text-align: right;
   font-weight: bold;
   white-space: nowrap;
 }
