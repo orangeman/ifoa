@@ -12,6 +12,7 @@ search = null
 
 
 $ () ->
+
   m = $(location).attr('pathname').match /\/(.*)\/(.*)/
   dest = autosuggest $("#dest"), if m then decodeURI m[2] else ""
   orig = autosuggest $("#orig"), if m then decodeURI m[1] else ""
@@ -55,6 +56,13 @@ $ () ->
   	ext: 'png'
   ).addTo map
   L.control.zoom(position: "bottomright").addTo map
+
+  geolocator.locateByIP ( (l) ->
+    console.log l.address.city
+    map.setView [l.coords.latitude, l.coords.longitude]
+  ), ((err) ->
+    console.log err
+  ), 1 # 0 (FreeGeoIP), 1 (GeoPlugin), 2 (Wikimedia)
 
 
   points = []
