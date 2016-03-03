@@ -24,12 +24,15 @@ $ () ->
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
     console.log JSON.stringify ride
+    $("#" + ride.id).remove()
+    if ride.me
+      console.log "ME " + ride.id
+      history.replaceState {}, "", HOST +
+        window.location.pathname + "#" + ride.id
     if !time || ride.time > time
       time = ride.time
-      console.log time
-    if ride.del
+    if ride.status == "deleted"
       console.log "DELETE " + ride.time
-      $("#" + ride.time).remove()
       return next()
     rides.append htmlize ride
     sort.refresh()
@@ -37,15 +40,27 @@ $ () ->
   .onclose = () -> console.log "CLOSE"
   console.log "time " + time
 
-  stream.write $(location).attr('pathname') + "#" + (time ||= 1)
+  query = () ->
+    console.log "QUERY " + window.location.href.split("#")[1]
+    stream.write JSON.stringify
+      id: window.location.href.split("#")[1],
+      route: window.location.pathname,
+      details: details.val().trim()
+      since: (time ||= 1)
 
   search = () ->
-    query = "/#{orig()}/#{dest()}"
-    if window.location.pathname != query
-      history.replaceState {}, "", HOST + query
-      console.log "path " + window.location.pathname + "#0"
-      stream.write query + "#0"
+    route = "/#{orig()}/#{dest()}"
+    if window.location.pathname != route
+      id = window.location.href.split("#")[1]
+      history.replaceState {}, "", HOST + route +
+        (if id then "#" + id else "")
       rides.html ""
+      time = 1
+      query()
+
+  details = $("#details").find "input"
+  details.on "input", query
+  query()
 
   map = L.map("map").setView [48.505, 9.09], 10
   L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}',

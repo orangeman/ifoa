@@ -1,9 +1,10 @@
-<tr class="ride" id="{{ time }}">
-  <td class="time">{{ time }}</td>
+<tr class="ride" id="{{ id }}">
+  <td class="id" data-sort="{{ time }}">{{ id }}</td>
   <td class="pickup" data-sort="{{ pickup }}">{{ pickupLabel }}</td>
   <td class="{{ who_css }}">{{ who }}</td>
   <td class="orig">{{ from }}</td>
   <td class="{{ dist_css }}">{{ dist }} km</td>
   <td class="dest">{{ to }}</td>
-  <td class="detour" data-sort="{{ det }}">{{ det }} km</td>
+  <td class="detour" data-sort="{{ det_sort }}">{{ det }} km</td>
+  <td class="details">{{ details }}</td>
 </tr>

@@ -13,8 +13,9 @@ duration = (dist) ->
 who = (r) ->
   if r.me
     return "MICH"
-  label = "DRIVER"
-  if r.passenger
+  else if r.driver
+    label = "DRIVER"
+  else
     label = "PASSENGER"
   det = 2 * (r.pickup + r.dropoff) - r.det
   if det < 300
@@ -24,9 +25,16 @@ who = (r) ->
       label = label + " or DRIVER det #{det}km"
   label
 
+normalize = (n) ->
+  n = "" + n
+  prefix = ""
+  prefix = "0" + prefix for i in [0..(4 - n.length)]
+  prefix + n
+
 module.exports = (r) ->
   r.who = who r
-  r.who_css = r.who.toLowerCase()
+  r.who_css = if r.me then "mich" else if r.driver then "driver" else "passenger"
   r.dist_css = "dist_" + r.who_css
   r.pickupLabel = duration r.pickup
+  r.det_sort = normalize r.det
   mustache.render html, r

@@ -10,7 +10,7 @@ rds = null
 server = (cb) ->
   exec "rm -rf data/rides", (err, out) ->
     rds = spawn "node ./server.js"
-    #rds.stdout.pipe process.stdout
+    rds.stdout.pipe process.stdout
     rds.stderr.pipe process.stderr
     setTimeout cb, 1000
 
@@ -41,11 +41,15 @@ module.exports = (title, run) ->
     t.test.connect = (query, cb) ->
       sock = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
       sock.onopen = () ->
-        sock.send query
+        sock.send JSON.stringify query
         sock.onmessage = (msg) ->
           ride = JSON.parse msg.data
           #console.log "DA " + msg.data
           cb ride if ride.route
+      sock
+
+    t.test.stopServer = () -> rds.close()
+    t.test.startServer = server
 
     run t.test
     t.end()

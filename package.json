@@ -32,7 +32,7 @@
   },
   "scripts": {
     "postinstall": "coffee -c server.coffee ride.coffee dist.coffee && browserify -t coffeeify -t brfs index.coffee > public/index.js",
-    "test": "coffee -c test/*.coffee && ./node_modules/tape/bin/tape test/*.js | node_modules/tap-spec/bin/cmd.js",
+    "test": "coffee -c server.coffee test/*.coffee && ./node_modules/tape/bin/tape test/*.js | node_modules/tap-spec/bin/cmd.js",
     "start": "node server.js"
   },
   "keywords": [

@@ -21,9 +21,13 @@ server = http.createServer (req, response) ->
   console.log req.url
   if req.method == "POST"
     req.on "data", (r) ->
-      ride = JSON.parse r
-      ride.url = "nada"
-      ride.route = "/" + ride.from + "/" + ride.to
+      ride = {}
+      r = JSON.parse r
+      ride.expire = r.expire
+      ride.url = r.url || "nada"
+      ride.from = r.from
+      ride.to = r.to
+      ride.route = "/" + r.from + "/" + r.to
       console.log "\nPOST " + JSON.stringify ride
       ride = post ride, ride.expire || EXPIRE
       insert ride, 9999999999999999, (latest) ->
@@ -78,57 +82,106 @@ server = http.createServer (req, response) ->
 socket = {}
 
 shoe (sockjs) ->
-  session =
-  query = null
-  sockjs.on "data", (url) ->
-    console.log "OPEN " + url
-    if query
-      query.del = true
-      rides.put new Date().getTime(), query
-      remove query
-    m = decodeURI(url).match /(\/(.*)\/(.*))#(\d*)/
-    return unless m
-    query = route: m[1], from: m[2], to: m[3]
-    query.url = sockjs._session.connection.pathname
-    socket[query.url] = sockjs
-    if query.from.length > 0 && query.to.length > 0
-      query = post query
-      insert query, parseInt(m[4]), (latest) ->
-        search query, latest + 1
+  ride = null
+  sockjs.on "data", (q) ->
+    q = JSON.parse q
+    console.log "RECEIVE " + JSON.stringify q
+    if q.id && ride != null
+      rides.get "id:" + q.id, (err, r) ->
+        console.log "EXISTING " + JSON.stringify r
+        rides.del r.route + ">" + r.route + "#" + r.id if r
+        ride = r
+        ride.time = new Date().getTime()
+        ride.url = sockjs._session.connection.pathname
+        socket[ride.url] = sockjs
+        ride.seats = q.seats if q.seats
+        ride.details = q.details if q.details
+        if (q.route && ride.route != decodeURI q.route) || r.status == "deleted"
+          if r && r.status != "deleted"
+            console.log "UNMATCH " + r.id + " :: " + r.time + r.route
+            remove id: ride.id, time: r.time, route: r.route, url: r.url, status: "deleted"
+          ride.status = "updated"
+          ride.route = decodeURI q.route
+          m = ride.route.match /\/(.*)\/(.*)/
+          return unless m
+          ride.from = m[1]
+          ride.to = m[2]
+          rides.put ride.time + ride.route, ride
+          insert ride, parseInt(q.since || 1), (latest) ->
+            search ride, latest + 1
+            .pipe(JSONStream.stringify(false), end: false)
+            .pipe sockjs, end: false
+          .pipe sockjs, end: false
+        else
+          console.log "UPDATE " + ride.route + ">" + ride.route + "#" + r.time
+          ride.det = 0
+          ride.pickup = 0
+          ride.dropof = 0
+          rides.put ride.time + ride.route, ride
+          rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
+          cache ride.route
+          .pipe notifyAbout ride, 1
+          #sockjs.write JSON.stringify ride
+    else
+      ride = id: q.id || uid()
+      ride.url = sockjs._session.connection.pathname
+      socket[ride.url] = sockjs
+      ride.seats = q.seats if q.seats
+      ride.details = q.details if q.details
+      ride.route = decodeURI q.route
+      m = ride.route.match /\/(.*)\/(.*)/
+      return unless m
+      ride.from = m[1]
+      ride.to = m[2]
+      ride = post ride
+      insert ride, parseInt(q.since || 1), (latest) ->
+        search ride, latest + 1
         .pipe(JSONStream.stringify(false), end: false)
         .pipe sockjs, end: false
       .pipe sockjs, end: false
+
   sockjs.on "close", () ->
-    console.log "\nCLOSE " + session
-    if query
-      query.del = true
-      rides.put new Date().getTime(), query
-      remove query
+    if ride
+      ride.status = "deleted"
+      rides.put new Date().getTime(), ride
+      delete socket[ride.url]
+      remove ride
 .installHandlers server, prefix: "/sockjs"
 
 clean = (t) ->
   () ->
+    latest = 0
     now = new Date().getTime()
     console.log "\nCLEAN " + now + " - " + t
     rides.createReadStream(gt: (now - t) + "/", lt: "a")
-    .on "end", () -> nextTime = 9999999999999999
+    .on "end", () ->
+      console.log "DONE CLEAN up to " + latest
+      rides.put "latest_cleanup", latest
+      nextTime = 9999999999999999
     .pipe through.obj (r, enc, next) ->
       ride = r.value
+      latest = ride.time if ride.time > latest
       console.log "consider " + JSON.stringify ride
       if ride.time - now < 3000
-        if ride.del
+        if ride.status == "deleted"
           remove ride
         else
           console.log "no clean up " + JSON.stringify ride
       else
         nextTime = ride.time
-        console.log "schedule " + (nextTime - now)
+        console.log "DONE CLEAN up to " + latest + " Next in " + (nextTime - now)
+        rides.put "latest_cleanup", latest
         setTimeout clean, nextTime - now
         this.destroy()
       next()
 
+rides = level "./data/rides", valueEncoding: "json"
+
 server.listen process.env.PORT || 5000
-setTimeout clean(1000 * 1000), 1000
+rides.get "latest_cleanup", (err, latest) ->
+  if latest
+    setTimeout clean(new Date().getTime() - parseInt(latest) + 2000, 1000)
+  else rides.put "latest_cleanup", new Date().getTime()
 
 
 uid = ->
@@ -138,16 +191,13 @@ uid = ->
     v.toString(16)
   )
 
-rides = level "./data/rides", valueEncoding: "json"
 post = (ride, expire) ->
-  ride.id = uid()
   now = new Date().getTime()
   if !ride.time || ride.time < now
     ride.time = now
-  rides.put "id:" + ride.id, ride
   rides.put ride.time + ride.route, ride
   if expire
-    rides.put ride.time + expire, del: true, id: ride.id, time: ride.time + expire, route: ride.route, url: ride.url
+    rides.put ride.time + expire, status: "deleted", id: ride.id, time: ride.time + expire, route: ride.route, url: ride.url
     if ride.time + expire < nextTime
       nextTime = ride.time + expire
       console.log "schedule " + (nextTime - now)
@@ -167,7 +217,7 @@ search = (query, since) ->
 
 remove = (query) ->
   console.log "REMOVE " + query.id + " :: " + query.time + query.route
-  rides.put "id:" + query.id, status: 'deleted'
+  query.status = "deleted"
   cache query.route
   .pipe match query
   .pipe notifyAbout query
@@ -180,7 +230,7 @@ cache = (route) ->
 
 fresh = (since) ->
   console.log " :: search  since " + since
-  rides.createReadStream(gt: since + "/", lt: new Date().getTime() + "/", reverse: true)
+  rides.createReadStream(gt: since + "/", lte: new Date().getTime() + "/", reverse: true)
 
 DET = 300
 match = (q) ->
@@ -199,28 +249,29 @@ match = (q) ->
       latest = ride.value
       return next()
     r = ride.value
+    console.log JSON.stringify r
     latest = r.time if r.time > latest
-    if visited[r.time]
-      console.log "     visited " + r.time
+    if visited[r.id]
+      console.log "     visited " + r.id
       rides.del ride.key
       return next()
-    if q.del
+    if q.status == "deleted"
       this.push ride
-      visited[r.time] = true
+      visited[r.id] = true
       if ride.key.match /#del/
         return next()
-      console.log " <-- UNMATCH " + r.route + ">" + q.route + "#" + q.time
-      rides.del r.route + ">" + q.route + "#" + q.time
+      console.log " <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id
+      rides.del r.route + ">" + q.route + "#" + q.id
       return next()
-    visited[r.time] = true
+    visited[r.id] = true
     det r, q, (pickup, join, dropoff, alone) =>
       detDriver = pickup + join + dropoff - alone
       detPassenger = pickup + alone + dropoff - join
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
-        if r.del
-          console.log " --> UNMATCH " + q.route + ">" + r.route + "#" + r.time
-          rides.del q.route + ">" + r.route + "#" + r.time, (err) =>
+        if r.status == "deleted"
+          console.log " --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
+          rides.del q.route + ">" + r.route + "#" + r.id, (err) =>
             this.push ride
             next()
         else
@@ -231,8 +282,8 @@ match = (q) ->
             r.driver = true
           else
             r.passenger = true
-          console.log " --> MATCH " + q.route + " ---> " + r.from + "/" + r.to + "#" + r.time
-          rides.put q.route + ">/" + r.from + "/" + r.to + "#" + r.time, r, (err) =>
+          console.log " --> MATCH " + q.route + " ---> " + r.from + "/" + r.to + "#" + r.id
+          rides.put q.route + ">/" + r.from + "/" + r.to + "#" + r.id, r, (err) =>
             this.push ride
             next()
       else
@@ -250,41 +301,47 @@ notifyAbout = (q, after, done) ->
       latest = ride.value
       return next()
     r = ride.value
-    if !r.del
+    if r.id == q.id
+      console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
+      r.me = true
+    if r.status != "deleted"
       q.det = r.det
       q.pickup = r.pickup
       q.dropoff = r.dropoff
-      q.driver = true if r.passenger
-      q.passenger = true if r.driver
+      if r.passenger
+        q.driver = true
+        delete q.passenger
+      if r.driver
+        q.passenger = true
+        delete q.driver
       q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
       q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
-    if r.time != q.time
-      if r.url.match /sockjs/
-        if sock = socket[r.url]
-          unless q.del
-            console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.time
-            rides.put r.route + ">" + q.route + "#" + q.time, q
-          console.log "     NOTIFY " + r.time + r.route
+    if r.url.match /sockjs/
+      if sock = socket[r.url]
+        unless q.status == "deleted"
+          console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.id
+          rides.put r.route + ">" + q.route + "#" + q.id, q
+        console.log "     NOTIFY " + r.time + r.route
+        if r.id == q.id
+          console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
+          q.me = true
           sock.write JSON.stringify(q) + "\n"
+          delete q.me
         else
-          console.log "     no socket "
-          console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-          rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.time
-          if q.url.match /sockjs/
-            if sock = socket[q.url]
-              socket[q.url].write JSON.stringify(del: true, time: r.time) + "\n"
-            else
-              console.log  "      no socket query"
-          return next()
-    else
-      console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
-      r.me = true
-    if r.time > after
+          sock.write JSON.stringify(q) + "\n"
+      else
+        console.log "     no socket " + JSON.stringify r
+        console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.id
+        rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.id
+        return next null, status: "deleted", id: r.id, time: r.time
+    if r.time > after && !r.me
       console.log "     send " + r.time + "/" + r.from + "/" + r.to
       next(null, r)
     else
       next()
-  .on "end", () ->  done latest if done
+  .on "end", () ->
+    rides.put "id:" + q.id, q
+    done latest if done
 
 names = level "./data/names"
 suggest = (text) ->

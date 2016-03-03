@@ -19,21 +19,28 @@ h1 {
   width: 61.803%;
   z-index: 3;
 }
+input[type=text] {
+  font-size: 3em;
+  padding: 0 .2em;
+  width: 100%;
+}
 #orig {
   float: left;
 }
 #dest {
   float: right;
 }
+#details {
+  font-size: 0.3em;
+  width: 61.803%;
+  position: absolute;
+  margin-top: 60px;
+  z-index: 2;
+  float: left;
+}
 .place {
   position: relative;
-  padding: 2em;
   width: 50%;
-}
-input[type=text] {
-  font-size: 4.2em;
-  padding: 0.2em;
-  width: 100%;
 }
 a {
   margin-bottom: 0px
@@ -67,10 +74,9 @@ a {
 #results {
   background-color: rgba(0, 0, 0, 0.85);
   position: absolute;
-  margin-top: 150px;
+  margin-top: 80px;
   width: 61.803%;
   float: left;
-  padding-top: 20px;
   padding: 1em;
   z-index: 2;
 }
@@ -93,8 +99,8 @@ tr:hover {
   cursor: pointer;
   background-color: #000000;
 }
-.time {
-  font-size: 0.15em;
+.id {
+  font-size: 0.3em;
 }
 .pickup {
   width 0.7em;
@@ -139,10 +145,15 @@ tr:hover {
   white-space: nowrap;
 }
 .detour {
-  font-size: 2em;
+  font-size: 1.7em;
   text-align: right;
   font-weight: bold;
   white-space: nowrap;
+}
+.details {
+  font-size: 0.7em;
+  text-align: justify;
+  width: 0.3em;
 }
 
 th.sort-header::-moz-selection { background:transparent; }
