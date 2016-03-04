@@ -25,6 +25,7 @@ $ () ->
   .pipe es.map (ride, next) ->
     console.log JSON.stringify ride
     $("#" + ride.id).remove()
+    console.log k + ":" + v for k,v of stream.sock._options.info
     if ride.me
       console.log "ME " + ride.id
       history.replaceState {}, "", HOST +

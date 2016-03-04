@@ -10,12 +10,13 @@ JSONStream = require "JSONStream"
 hyperstream = require "hyperstream"
 ecstatic = require("ecstatic")(__dirname + "/public", cache: "no-cache")
 html = require("fs").readFileSync("ride.html").toString()
-distance = require "./dist"
+routing = require "./routing"
+getDist = routing.dist
+getPath = routing.path
 render = require "./ride"
 nextTime = 9999999999999999
 EXPIRE = 180 * 1000
 
-paths = level "./data/path"
 
 server = http.createServer (req, response) ->
   console.log req.url
@@ -43,11 +44,8 @@ server = http.createServer (req, response) ->
     .pipe response
   else if m = req.url.match /paths\/(.*)\/(.*)/
     response.writeHead 200, "Content-Type": "application/json"
-    key = if m[1] < m[2] then m[1] + m[2] else m[2] + m[1]
-    key = decodeURI(key).toUpperCase()
-    console.log decodeURI key
-    paths.createValueStream gte: key, lte: key
-    .pipe response
+    getPath decodeURI(m[1]), decodeURI(m[2]), (path) ->
+      response.end path
   else if m = req.url.match /rides\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"
@@ -235,7 +233,7 @@ fresh = (since) ->
 DET = 300
 match = (q) ->
   console.log "   match " + q.route
-  dist = distance()
+  dist = getDist()
   det = (driver, passenger, done) ->
     dist driver.from, passenger.from, (pickup) ->
       dist passenger.from, passenger.to, (join) ->

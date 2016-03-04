@@ -1,6 +1,8 @@
 node_modules/
 ride.js
-dist.js
+index.js
 server.js
-test/*.js
+routing.js
+graphhopper.js
 public/index.js
+test/*.js
