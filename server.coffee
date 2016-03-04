@@ -265,6 +265,7 @@ match = (q) ->
     det r, q, (pickup, join, dropoff, alone) =>
       detDriver = pickup + join + dropoff - alone
       detPassenger = pickup + alone + dropoff - join
+      console.log "DETOUR " + detDriver + " : " + detPassenger
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
         if r.status == "deleted"
