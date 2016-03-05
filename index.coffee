@@ -47,6 +47,7 @@ $ () ->
       id: window.location.href.split("#")[1],
       route: window.location.pathname,
       details: details.val().trim()
+      status: "published",
       since: (time ||= 1)
 
   search = () ->

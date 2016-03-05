@@ -84,7 +84,7 @@ shoe (sockjs) ->
   sockjs.on "data", (q) ->
     q = JSON.parse q
     console.log "RECEIVE " + JSON.stringify q
-    if q.id && ride != null
+    if q.id
       rides.get "id:" + q.id, (err, r) ->
         console.log "EXISTING " + JSON.stringify r
         rides.del r.route + ">" + r.route + "#" + r.id if r
@@ -93,6 +93,7 @@ shoe (sockjs) ->
         ride.url = sockjs._session.connection.pathname
         socket[ride.url] = sockjs
         ride.seats = q.seats if q.seats
+        ride.status = q.status || r.status || "private"
         ride.details = q.details if q.details
         if (q.route && ride.route != decodeURI q.route) || r.status == "deleted"
           if r && r.status != "deleted"
@@ -125,6 +126,7 @@ shoe (sockjs) ->
       ride.url = sockjs._session.connection.pathname
       socket[ride.url] = sockjs
       ride.seats = q.seats if q.seats
+      ride.status = q.status || "private"
       ride.details = q.details if q.details
       ride.route = decodeURI q.route
       m = ride.route.match /\/(.*)\/(.*)/
@@ -265,7 +267,6 @@ match = (q) ->
     det r, q, (pickup, join, dropoff, alone) =>
       detDriver = pickup + join + dropoff - alone
       detPassenger = pickup + alone + dropoff - join
-      console.log "DETOUR " + detDriver + " : " + detPassenger
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
         if r.status == "deleted"
@@ -301,7 +302,7 @@ notifyAbout = (q, after, done) ->
       return next()
     r = ride.value
     if r.id == q.id
-      console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
+      console.log "     ME " + r.time + "/" + r.from + "/" + r.to
       r.me = true
     if r.status != "deleted"
       q.det = r.det
@@ -320,20 +321,20 @@ notifyAbout = (q, after, done) ->
         unless q.status == "deleted"
           console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.id
           rides.put r.route + ">" + q.route + "#" + q.id, q
-        console.log "     NOTIFY " + r.time + r.route
         if r.id == q.id
-          console.log "     SELBST " + r.time + "/" + r.from + "/" + r.to
+          console.log "     NOTIFY SELF   " + r.time + r.route
           q.me = true
           sock.write JSON.stringify(q) + "\n"
           delete q.me
-        else
+        else if q.status != "private"
+          console.log "     NOTIFY ELSE   " + r.time + r.route
           sock.write JSON.stringify(q) + "\n"
       else
         console.log "     no socket " + JSON.stringify r
         console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.id
         rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.id
         return next null, status: "deleted", id: r.id, time: r.time
-    if r.time > after && !r.me
+    if r.time > after && !r.me && r.status != "private"
       console.log "     send " + r.time + "/" + r.from + "/" + r.to
       next(null, r)
     else
