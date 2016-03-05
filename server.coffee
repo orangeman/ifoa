@@ -21,22 +21,28 @@ EXPIRE = 180 * 1000
 server = http.createServer (req, response) ->
   console.log req.url
   if req.method == "POST"
-    req.on "data", (r) ->
-      ride = {}
-      r = JSON.parse r
-      ride.expire = r.expire
-      ride.url = r.url || "nada"
-      ride.from = r.from
-      ride.to = r.to
-      ride.route = "/" + r.from + "/" + r.to
-      console.log "\nPOST " + JSON.stringify ride
-      ride = post ride, ride.expire || EXPIRE
-      insert ride, 9999999999999999, (latest) ->
-        search ride, latest + 1
-        .on "end", () ->
-          console.log "ENDETED"
-          response.writeHead 200, "Content-Type": "application/json"
-          response.end JSON.stringify ride
+    req.on "data", (q) ->
+      console.log "HTTP POST " + q
+      post q,
+        ((ride) -> # INSERT
+          ride.url = q.url || "nadaradada"
+          rides.put ride.time + ride.route, ride
+          insert ride, 9999999999999999, (latest) ->
+            search ride, latest + 1
+            .on "end", () ->
+              console.log "DONE HTTP INSERT"
+              response.writeHead 200, "Content-Type": "application/json"
+              response.end JSON.stringify ride
+        ), ((ride) -> # UPDATE
+          rides.put ride.time + ride.route, ride
+          rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
+          cache ride.route
+          .pipe notifyAbout ride, 1
+          .on "end", () ->
+            console.log "DONE HTTP UPDATE"
+            response.writeHead 200, "Content-Type": "application/json"
+            response.end JSON.stringify ride
+        )
     return
   if req.url == "/"
     response.writeHead 200, "Content-Type": "text/html"
@@ -80,73 +86,87 @@ server = http.createServer (req, response) ->
 socket = {}
 
 shoe (sockjs) ->
-  ride = null
+  myRide = null
   sockjs.on "data", (q) ->
-    q = JSON.parse q
-    console.log "RECEIVE " + JSON.stringify q
-    if q.id
-      rides.get "id:" + q.id, (err, r) ->
-        console.log "EXISTING " + JSON.stringify r
-        rides.del r.route + ">" + r.route + "#" + r.id if r
-        ride = r
-        ride.time = new Date().getTime()
+    console.log "SOCKET POST" + q
+    post q,
+      ((ride) -> # INSERT
         ride.url = sockjs._session.connection.pathname
         socket[ride.url] = sockjs
-        ride.seats = q.seats if q.seats
-        ride.status = q.status || r.status || "private"
-        ride.details = q.details if q.details
-        if (q.route && ride.route != decodeURI q.route) || r.status == "deleted"
-          if r && r.status != "deleted"
-            console.log "UNMATCH " + r.id + " :: " + r.time + r.route
-            remove id: ride.id, time: r.time, route: r.route, url: r.url, status: "deleted"
-          ride.status = "updated"
-          ride.route = decodeURI q.route
-          m = ride.route.match /\/(.*)\/(.*)/
-          return unless m
-          ride.from = m[1]
-          ride.to = m[2]
-          rides.put ride.time + ride.route, ride
-          insert ride, parseInt(q.since || 1), (latest) ->
-            search ride, latest + 1
-            .pipe(JSONStream.stringify(false), end: false)
-            .pipe sockjs, end: false
+        rides.put ride.time + ride.route, ride
+        insert ride, parseInt(q.since || 1), (latest) ->
+          search ride, latest + 1
+          .pipe(JSONStream.stringify(false), end: false)
           .pipe sockjs, end: false
-        else
-          console.log "UPDATE " + ride.route + ">" + ride.route + "#" + r.time
-          ride.det = 0
-          ride.pickup = 0
-          ride.dropof = 0
-          rides.put ride.time + ride.route, ride
-          rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
-          cache ride.route
-          .pipe notifyAbout ride, 1
-          #sockjs.write JSON.stringify ride
+        .pipe sockjs, end: false
+        myRide = ride
+      ), ((ride) -> # UPDATE
+        ride.url = sockjs._session.connection.pathname
+        socket[ride.url] = sockjs
+        rides.put ride.time + ride.route, ride
+        rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
+        cache ride.route
+        .pipe notifyAbout ride, 1
+        myRide = ride
+      )
+  sockjs.on "close", () ->
+    if myRide
+      myRide.status = "deleted"
+      rides.put new Date().getTime(), myRide
+      delete socket[myRide.url]
+      remove myRide
+.installHandlers server, prefix: "/sockjs"
+
+
+post = (q, toInsert, toUpdate) ->
+  q = JSON.parse q
+  ride = null
+  find q, (r) ->
+    if r
+      console.log "EXISTING " + JSON.stringify r
+      rides.del r.route + ">" + r.route + "#" + r.id if r
+      ride = r
     else
-      ride = id: q.id || uid()
-      ride.url = sockjs._session.connection.pathname
-      socket[ride.url] = sockjs
-      ride.seats = q.seats if q.seats
-      ride.status = q.status || "private"
-      ride.details = q.details if q.details
-      ride.route = decodeURI q.route
-      m = ride.route.match /\/(.*)\/(.*)/
+      ride = id: uid()
+    ride.time = new Date().getTime()
+    if q.time && q.time > ride.time
+      ride.time = q.time
+    ride.seats = q.seats if q.seats
+    ride.details = q.details if q.details
+    ride.status = q.status || ride.status || "private"
+    q.route = decodeURI q.route if q.route
+    q.route = "/#{decodeURI(q.from)}/#{decodeURI(q.to)}" if q.from && q.to
+    if r && (!q.route || q.route == r.route) && r.status != "deleted"
+      console.log "UPDATE " + ride.route + ">" + ride.route + "#" + r.time
+      ride.det = 0
+      ride.pickup = 0
+      ride.dropof = 0
+      toUpdate ride
+    else
+      if r && r.status != "deleted"
+        console.log "UNMATCH " + r.id + " :: " + r.time + r.route
+        remove id: ride.id, time: r.time, route: r.route, url: r.url, status: "deleted"
+        ride.status = "updated"
+      ride.route = q.route if q.route
+      m = q.route.match /\/(.*)\/(.*)/
       return unless m
       ride.from = m[1]
       ride.to = m[2]
-      ride = post ride
-      insert ride, parseInt(q.since || 1), (latest) ->
-        search ride, latest + 1
-        .pipe(JSONStream.stringify(false), end: false)
-        .pipe sockjs, end: false
-      .pipe sockjs, end: false
+      if q.expire
+        ride.expire = q.expire
+        rides.put ride.time + q.expire, status: "deleted", id: ride.id, time: ride.time + q.expire, route: ride.route, url: ride.url
+        if ride.time + q.expire < nextTime
+          nextTime = ride.time + q.expire
+          console.log "schedule " + (nextTime - new Date().getTime())
+          setTimeout clean(1000), nextTime - new Date().getTime()
+      toInsert ride
 
-  sockjs.on "close", () ->
-    if ride
-      ride.status = "deleted"
-      rides.put new Date().getTime(), ride
-      delete socket[ride.url]
-      remove ride
-.installHandlers server, prefix: "/sockjs"
+find = (q, cb) ->
+  if q.id
+    rides.get "id:" + q.id, (err, r) ->
+      cb r
+  else
+    cb null
 
 clean = (t) ->
   () ->
@@ -191,18 +211,7 @@ uid = ->
     v.toString(16)
   )
 
-post = (ride, expire) ->
-  now = new Date().getTime()
-  if !ride.time || ride.time < now
-    ride.time = now
-  rides.put ride.time + ride.route, ride
-  if expire
-    rides.put ride.time + expire, status: "deleted", id: ride.id, time: ride.time + expire, route: ride.route, url: ride.url
-    if ride.time + expire < nextTime
-      nextTime = ride.time + expire
-      console.log "schedule " + (nextTime - now)
-      setTimeout clean(1000), nextTime - now
-  ride
+
 
 insert = (query, after, done) ->
   console.log "INSERT " + "id:" + query.id + " :: " + query.time + query.route
@@ -249,7 +258,6 @@ match = (q) ->
       latest = ride.value
       return next()
     r = ride.value
-    console.log JSON.stringify r
     latest = r.time if r.time > latest
     if visited[r.id]
       console.log "     visited " + r.id
@@ -301,6 +309,7 @@ notifyAbout = (q, after, done) ->
       latest = ride.value
       return next()
     r = ride.value
+    console.log JSON.stringify r
     if r.id == q.id
       console.log "     ME " + r.time + "/" + r.from + "/" + r.to
       r.me = true

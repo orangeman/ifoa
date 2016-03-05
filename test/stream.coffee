@@ -53,10 +53,10 @@ require("./setup") "STREAM", (test) ->
             if not ride.seats
               user.send JSON.stringify id: ride.id, seats: 3
             else if ride.seats == 3
-              t.ok true, "decr seats"
+              t.ok true, "decr seats 3"
               user.send JSON.stringify id: ride.id, seats: 2
             else if ride.seats == 2
-              t.ok true, "decr seats"
+              t.ok true, "decr seats 2"
 
   test ":: update match", (t) ->
     t.plan 5
