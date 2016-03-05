@@ -23,6 +23,9 @@ $ () ->
   (stream = shoe "/sockjs")
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
+    if ride.fail
+      alert ride.fail
+      return next()
     console.log JSON.stringify ride
     $("#" + ride.id).remove()
     console.log k + ":" + v for k,v of stream.sock._options.info
@@ -60,9 +63,23 @@ $ () ->
       time = 1
       query()
 
+  sst = ->
+    'xxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, (c) ->
+      r = Math.random() * 16 | 0
+      v = if c is 'x' then r else (r & 0x3|0x8)
+      v.toString(16)
+    )
+
   details = $("#details").find "input"
   details.on "input", query
+  if !s = window.localStorage.getItem "session"
+    window.localStorage.setItem "session", s = sst()
+    console.log "NEW SESSION " + s
+  else
+    console.log "SESSION " + s
+  stream.write JSON.stringify session: s
   query()
+
 
   map = L.map("map").setView [48.505, 9.09], 10
   L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}',

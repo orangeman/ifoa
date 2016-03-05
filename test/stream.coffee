@@ -32,7 +32,7 @@ require("./setup") "STREAM", (test) ->
             t.equal r.det, 3, "Umweg für den Fahrer ist 30km" # 4x
             if r.status == "deleted"
               t.ok true, "deleted"
-              test.connect {route: "/Berlin/Leipzig", id: r.id, status: "published"}, (r) ->
+              user.reconnect {route: "/Berlin/Leipzig", id: r.id, status: "published"}
       else if ride.route == "/Kreuzberg/Leipzig"
         t.equal ride.det, 3, "Umweg als Mitfahrer ist 30km"
         user.close()
@@ -54,7 +54,8 @@ require("./setup") "STREAM", (test) ->
               user.send JSON.stringify id: ride.id, seats: 3
             else if ride.seats == 3
               t.ok true, "decr seats 3"
-              user.send JSON.stringify id: ride.id, seats: 2
+              setTimeout (() ->
+                user.send JSON.stringify id: ride.id, seats: 2), 100
             else if ride.seats == 2
               t.ok true, "decr seats 2"
 
@@ -72,7 +73,7 @@ require("./setup") "STREAM", (test) ->
             if ride.status != "deleted"
               t.ok true, "found: " + ride.route
               user.close()
-              test.connect {route: "/Berlin/Freising", id:ride.id, since: 1}, (ride) ->
+              user.reconnect {route: "/Berlin/Freising", id:ride.id, since: 1}
             else t.ok true, "deleted " + ride.route
           else if ride.route == "/Berlin/Freising"
             t.ok true, "found: " + ride.route

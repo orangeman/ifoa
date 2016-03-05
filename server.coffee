@@ -23,7 +23,12 @@ server = http.createServer (req, response) ->
   if req.method == "POST"
     req.on "data", (q) ->
       console.log "HTTP POST " + q
-      post q,
+      q = JSON.parse q
+      if !req.headers.token
+        console.log "NO TOKEN"
+        response.end JSON.stringify(fail: "ACCESS DENIED") + "\n"
+        return
+      post q, req.headers.token || "XYZ",
         ((ride) -> # INSERT
           ride.url = q.url || "nadaradada"
           rides.put ride.time + ride.route, ride
@@ -42,6 +47,9 @@ server = http.createServer (req, response) ->
             console.log "DONE HTTP UPDATE"
             response.writeHead 200, "Content-Type": "application/json"
             response.end JSON.stringify ride
+        ), ((fail) ->
+          console.log fail
+          response.end JSON.stringify(fail: fail) + "\n"
         )
     return
   if req.url == "/"
@@ -84,12 +92,22 @@ server = http.createServer (req, response) ->
     ecstatic req, response
 
 socket = {}
+session = {}
 
 shoe (sockjs) ->
   myRide = null
   sockjs.on "data", (q) ->
-    console.log "SOCKET POST" + q
-    post q,
+    console.log "SOCKET POST " + q
+    s = sockjs._session.connection.pathname
+    q = JSON.parse q
+    if q.session
+      console.log "SESSION " + q.session
+      session[s] = token: q.session
+      return
+    if !session[s]
+      console.log "NO SESSION"
+      return sockjs.write JSON.stringify(fail: "ACCESS DENIED") + "\n"
+    post q, session[s].token,
       ((ride) -> # INSERT
         ride.url = sockjs._session.connection.pathname
         socket[ride.url] = sockjs
@@ -108,6 +126,9 @@ shoe (sockjs) ->
         cache ride.route
         .pipe notifyAbout ride, 1
         myRide = ride
+      ), ((fail) ->
+        console.log fail
+        sockjs.write JSON.stringify(fail: fail) + "\n"
       )
   sockjs.on "close", () ->
     if myRide
@@ -117,17 +138,25 @@ shoe (sockjs) ->
       remove myRide
 .installHandlers server, prefix: "/sockjs"
 
+user = {}
 
-post = (q, toInsert, toUpdate) ->
-  q = JSON.parse q
+post = (q, token, toInsert, toUpdate, onFail) ->
   ride = null
   find q, (r) ->
-    if r
+    if !r
+      ride = id: uid()
+      if !user[token]
+        user[token] = id: uid()[0..4]
+        console.log "NEW USER " + user[token].id
+      else
+        console.log "USER " + user[token].id
+      ride.user = user[token].id
+    else
       console.log "EXISTING " + JSON.stringify r
+      if !user[token] || user[token].id != r.user
+        return onFail "ACCESS DENIED"
       rides.del r.route + ">" + r.route + "#" + r.id if r
       ride = r
-    else
-      ride = id: uid()
     ride.time = new Date().getTime()
     if q.time && q.time > ride.time
       ride.time = q.time
@@ -168,6 +197,13 @@ find = (q, cb) ->
   else
     cb null
 
+uid = ->
+  'xxxxxxxxxxx'.replace(/[xy]/g, (c) ->
+    r = Math.random() * 16 | 0
+    v = if c is 'x' then r else (r & 0x3|0x8)
+    v.toString(16)
+  )
+
 clean = (t) ->
   () ->
     latest = 0
@@ -204,12 +240,6 @@ rides.get "latest_cleanup", (err, latest) ->
   else rides.put "latest_cleanup", new Date().getTime()
 
 
-uid = ->
-  'xxxxxxxxxxx'.replace(/[xy]/g, (c) ->
-    r = Math.random() * 16 | 0
-    v = if c is 'x' then r else (r & 0x3|0x8)
-    v.toString(16)
-  )
 
 
 
