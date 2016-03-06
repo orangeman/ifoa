@@ -10,7 +10,7 @@ rds = null
 server = (cb) ->
   exec "rm -rf data/rides", (err, out) ->
     rds = spawn "node ./server.js"
-    #rds.stdout.pipe process.stdout
+    rds.stdout.pipe process.stdout
     rds.stderr.pipe process.stderr
     setTimeout cb, 1500
 
@@ -40,23 +40,21 @@ module.exports = (title, run) ->
 
     t.test.connect = (query, cb) ->
       sock = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
-      token = uid()
+      sock.token = uid()
       sock.onopen = () ->
-        sock.send '{"session":"' + token + '"}\n'
+        sock.send '{"session":"' + sock.token + '"}\n'
         sock.send JSON.stringify query
         sock.onmessage = (msg) ->
           ride = JSON.parse msg.data
-          #console.log "DA " + msg.data
-          cb ride if ride.route
+          cb ride #if ride.route
       sock.reconnect = (q) ->
         s = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
         s.onopen = () ->
-          s.send '{"session":"' + token + '"}'
+          s.send '{"session":"' + sock.token + '"}'
           s.send JSON.stringify q
           s.onmessage = (msg) ->
             ride = JSON.parse msg.data
-            #console.log "DA " + msg.data
-            cb ride if ride.route
+            cb ride #if ride.route
       sock
 
     t.test.stopServer = () -> rds.close()

@@ -28,9 +28,19 @@ server = http.createServer (req, response) ->
         console.log "NO TOKEN"
         response.end JSON.stringify(fail: "ACCESS DENIED") + "\n"
         return
-      post q, req.headers.token || "XYZ",
+      token = req.headers.token
+      if req.url.match /user/
+        return if !q.session || !q.user || !q.user.name
+        (user[q.session] ||= {}).name = q.user.name
+        console.log "USER " + q.user.name
+        if q.ride
+          token = q.session
+          q = id: q.ride
+        else return
+      post q, token || "XYZ",
         ((ride) -> # INSERT
-          ride.url = q.url || "nadaradada"
+          console.log "url " + url[token]
+          ride.url = url[token] || q.url || "nadaradada"
           rides.put ride.time + ride.route, ride
           insert ride, 9999999999999999, (latest) ->
             search ride, latest + 1
@@ -39,6 +49,8 @@ server = http.createServer (req, response) ->
               response.writeHead 200, "Content-Type": "application/json"
               response.end JSON.stringify ride
         ), ((ride) -> # UPDATE
+          console.log "url " + url[token]
+          ride.url = url[token] || q.url || "nadaradada"
           rides.put ride.time + ride.route, ride
           rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
           cache ride.route
@@ -91,6 +103,7 @@ server = http.createServer (req, response) ->
   else
     ecstatic req, response
 
+url = {}
 socket = {}
 session = {}
 
@@ -101,16 +114,17 @@ shoe (sockjs) ->
     s = sockjs._session.connection.pathname
     q = JSON.parse q
     if q.session
-      console.log "SESSION " + q.session
+      console.log s + " SESSION " + q.session
       session[s] = token: q.session
+      url[q.session] = s
       return
     if !session[s]
       console.log "NO SESSION"
       return sockjs.write JSON.stringify(fail: "ACCESS DENIED") + "\n"
+    socket[s] = sockjs
     post q, session[s].token,
       ((ride) -> # INSERT
-        ride.url = sockjs._session.connection.pathname
-        socket[ride.url] = sockjs
+        ride.url = s
         rides.put ride.time + ride.route, ride
         insert ride, parseInt(q.since || 1), (latest) ->
           search ride, latest + 1
@@ -119,8 +133,7 @@ shoe (sockjs) ->
         .pipe sockjs, end: false
         myRide = ride
       ), ((ride) -> # UPDATE
-        ride.url = sockjs._session.connection.pathname
-        socket[ride.url] = sockjs
+        ride.url = s
         rides.put ride.time + ride.route, ride
         rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
         cache ride.route
@@ -131,7 +144,7 @@ shoe (sockjs) ->
         sockjs.write JSON.stringify(fail: fail) + "\n"
       )
   sockjs.on "close", () ->
-    if myRide
+    if myRide && !myRide.user.name
       myRide.status = "deleted"
       rides.put new Date().getTime(), myRide
       delete socket[myRide.url]
@@ -150,13 +163,14 @@ post = (q, token, toInsert, toUpdate, onFail) ->
         console.log "NEW USER " + user[token].id
       else
         console.log "USER " + user[token].id
-      ride.user = user[token].id
+      ride.user = user[token]
     else
       console.log "EXISTING " + JSON.stringify r
-      if !user[token] || user[token].id != r.user
+      if !user[token] || (user[token].id != r.user.id && user[token].name != r.user.name)
         return onFail "ACCESS DENIED"
       rides.del r.route + ">" + r.route + "#" + r.id if r
       ride = r
+      ride.user.name = user[token].name if user[token].name
     ride.time = new Date().getTime()
     if q.time && q.time > ride.time
       ride.time = q.time
@@ -177,7 +191,7 @@ post = (q, token, toInsert, toUpdate, onFail) ->
         remove id: ride.id, time: r.time, route: r.route, url: r.url, status: "deleted"
         ride.status = "updated"
       ride.route = q.route if q.route
-      m = q.route.match /\/(.*)\/(.*)/
+      m = ride.route.match /\/(.*)\/(.*)/
       return unless m
       ride.from = m[1]
       ride.to = m[2]
