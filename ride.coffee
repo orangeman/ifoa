@@ -25,17 +25,28 @@ who = (r) ->
       label = label + " or DRIVER det #{det}km"
   label
 
-normalize = (n) ->
-  n = "" + n
-  prefix = ""
-  prefix = "0" + prefix for i in [0..(4 - n.length)]
-  prefix + n
+user = (u) ->
+  n = ""
+  s = 0
+  for k,v of u
+    console.log "V : " + v.name
+    if v.name
+      n = n + '<a href="' + v.name + '">' + v.name + '</a><br>\n'
+    else s = s + 1
+  n = n + "(#{s} x online)</br>\n"
+  n
 
 module.exports = (r) ->
   r.who = who r
-  r.name = r.user.name || r.id
+  r.user = user r.user
   r.who_css = if r.me then "mich" else if r.driver then "driver" else "passenger"
   r.dist_css = "dist_" + r.who_css
   r.pickupLabel = duration r.pickup
   r.det_sort = normalize r.det
   mustache.render html, r
+
+normalize = (n) ->
+  n = "" + n
+  prefix = ""
+  prefix = "0" + prefix for i in [0..(4 - n.length)]
+  prefix + n

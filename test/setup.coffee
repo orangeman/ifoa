@@ -25,11 +25,6 @@ module.exports = (title, run) ->
       rds.close()
       t.end()
 
-    t.test.post = (ride, cb) ->
-      request.post {url: "http://localhost:5000", headers: 'token': "XY"}, (err, r, res) ->
-        cb JSON.parse res
-      .end JSON.stringify ride
-
     t.test.get = (path, cb) ->
       request "http://localhost:5000" + path, (err, r, res) ->
         cb JSON.parse res
@@ -37,6 +32,17 @@ module.exports = (title, run) ->
     t.test.find = (route, cb) ->
       request url: "http://localhost:5000" + route, headers: {"Accept": "application/json"}, (err, r, res) ->
         cb JSON.parse res
+
+    t.test.post = (ride, token, cb) ->
+      request.post {url: "http://localhost:5000", headers: 'token': token}, (err, r, res) ->
+        cb JSON.parse res
+      .end JSON.stringify ride
+
+    t.test.auth = (session, ride, name, cb) ->
+      request.post {url: "http://localhost:5000/user", headers: 'token': 'XYZ'}, (err, r, res) ->
+        console.log "logged in " + res
+        cb() if cb
+      .end JSON.stringify session: session, ride: ride, user: id: "A", name: name
 
     t.test.connect = (query, cb) ->
       sock = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }

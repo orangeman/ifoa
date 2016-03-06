@@ -22,7 +22,9 @@ lookup = (k, from, to, cb) ->
 
 graphhop = (k, from, to, cb) ->
   place from, (orig) ->
+    return cb dist: 99999999 if !orig
     place to, (dest) ->
+      return cb dist: 99999999 if !dest
       gh.dist orig, dest, (d) ->
         log.write "GH #{k}\n"
         dists.put k, d.dist
@@ -30,7 +32,7 @@ graphhop = (k, from, to, cb) ->
 
 place = (id, cb) ->
   places.get id.toUpperCase(), (e, p) ->
-    cb JSON.parse p
+    cb (JSON.parse(p) if p)
 
 module.exports.path = (from, to, cb) ->
   k = key from, to
@@ -40,6 +42,9 @@ module.exports.path = (from, to, cb) ->
     else
       graphhop k, from, to, (d) ->
         cb d.path
+
+module.exports.lookup = (from, to, cb) ->
+  lookup key(from, to), from, to, cb
 
 module.exports.dist = () ->
   distCache = {}

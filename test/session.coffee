@@ -19,6 +19,26 @@ require("./setup") "SESSION", (test) ->
       @onmessage = (msg) ->
         t.equal JSON.parse(msg.data).fail, "ACCESS DENIED"
 
+  test ":: two socket same session", (t) ->
+    t.plan 6
+    user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
+      if ride.me && !ride.seats
+        t.equal ride.route, "/Berlin/Munich", "me"
+        t.equal ride.status, "private", "see private self"
+        sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
+        .onopen = () ->
+          @send '{"session":"' + user.token + '"}\n'
+          @send JSON.stringify id: ride.id, seats: 5
+          @onmessage = (msg) ->
+            console.log "MSG " + msg.data
+            r = JSON.parse(msg.data)
+            t.equal r.route, "/Berlin/Munich"
+            t.equal r.seats, 5, "seats window 2"
+      else
+        t.equal ride.route, "/Berlin/Munich"
+        t.equal ride.seats, 5, "seats window 1"
+
+
   test ":: no update with different session", (t) ->
     t.plan 3
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->

@@ -13,13 +13,17 @@ require("./setup") "STREAM", (test) ->
       t.ok r.me, "Me self"
 
   test ":: match each other", (t) ->
-    t.plan 3
+    t.plan 4
     test.connect {route: "/Berlin/Leipzig", status: "published"}, (ride) ->
       if ride.me
         t.equal ride.route, "/Berlin/Leipzig", "me"
-    test.connect {route: "/Leipzig/Munich", status: "published"}, (ride) ->
-    test.connect {route: "/Berlin/Munich", status: "published"}, (r) ->
-      t.ok true, "not me" unless r.me
+        test.connect {route: "/Leipzig/Munich", status: "published"}, (ride) ->
+        test.connect {route: "/Berlin/Munich", status: "published"}, (r) ->
+          if r.route == "/Berlin/Leipzig"
+            t.ok true, "not me Berlin Leipzig" unless r.me
+          else if r.route == "/Leipzig/Munich"
+            t.ok true, "not me Leipzig Munich" unless r.me
+
 
   test ":: match other each", (t) ->
     t.plan 5
