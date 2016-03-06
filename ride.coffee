@@ -33,6 +33,7 @@ normalize = (n) ->
 
 module.exports = (r) ->
   r.who = who r
+  r.name = r.user.name || r.id
   r.who_css = if r.me then "mich" else if r.driver then "driver" else "passenger"
   r.dist_css = "dist_" + r.who_css
   r.pickupLabel = duration r.pickup

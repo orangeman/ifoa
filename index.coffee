@@ -79,6 +79,9 @@ $ () ->
     console.log "SESSION " + s
   stream.write JSON.stringify session: s
   query()
+  $("#login").on "click", () ->
+    window.open "https://ifoauth.herokuapp.com/auth/github?token=" +
+      s + "&ride=" + window.location.href.split("#")[1], "Auth", "height=400,width=300"
 
 
   map = L.map("map").setView [48.505, 9.09], 10

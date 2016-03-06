@@ -31,12 +31,20 @@ input[type=text] {
   float: right;
 }
 #details {
-  font-size: 0.3em;
   width: 61.803%;
   position: absolute;
   margin-top: 60px;
   z-index: 2;
+}
+#text {
+  font-size: 1.3em;
   float: left;
+  width: 90%;
+}
+#login {
+  float: right;
+  width: 10%;
+  height: 30px;
 }
 .place {
   position: relative;
@@ -74,7 +82,7 @@ a {
 #results {
   background-color: rgba(0, 0, 0, 0.85);
   position: absolute;
-  margin-top: 80px;
+  margin-top: 90px;
   width: 61.803%;
   float: left;
   padding: 1em;
@@ -100,7 +108,7 @@ tr:hover {
   background-color: #000000;
 }
 .id {
-  font-size: 0.3em;
+  font-size: 0.5em;
 }
 .pickup {
   width 0.7em;
@@ -145,6 +153,7 @@ tr:hover {
   white-space: nowrap;
 }
 .detour {
+  width: 0.7em;
   font-size: 1.7em;
   text-align: right;
   font-weight: bold;
