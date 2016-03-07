@@ -5,7 +5,7 @@ require("./setup") "PATHS", (test) ->
 
   test ":: get path", (t) ->
     t.plan 1
-    get "http://localhost:5000/paths/Kreuzberg/Wedding", (e, r, path) ->
+    get "http://localhost:5000/path/Kreuzberg/Wedding", (e, r, path) ->
       t.equal path, "_bv_IapopAl@dAT]p@jAlG{KUk@yE_JzToe@`" +
                     "@u@d@s@vAkDdCuFjEwI~BaEvAaDNg@dFsI~As" +
                     "Cr@yAPIFMDa@Vi@v@iA~AuBVe@b@Wf@q@Lc@l" +

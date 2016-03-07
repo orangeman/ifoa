@@ -20,6 +20,7 @@ $ () ->
   sort = tablesort $("table")[0]
 
   rides = $("#rides")
+#  (stream = shoe "https://ifoa.herokuapp.com/sockjs")
   (stream = shoe "/sockjs")
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
@@ -79,10 +80,16 @@ $ () ->
     console.log "SESSION " + s
   stream.write JSON.stringify session: s
   query()
+
   $("#login").on "click", () ->
     window.open "https://ifoauth.herokuapp.com/auth/github?token=" +
       s + "&ride=" + window.location.href.split("#")[1], "Auth", "height=400,width=300"
+    login()
 
+  login = () ->
+    request.post {url: "http://localhost:5000/login"}, (err, r, res) ->
+      console.log "RESPONSE: " + res
+    .end JSON.stringify username: "foo", password: "bar"
 
   map = L.map("map").setView [48.505, 9.09], 10
   L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}',

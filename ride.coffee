@@ -27,18 +27,15 @@ who = (r) ->
 
 user = (u) ->
   n = ""
-  s = 0
+  t = '{{label}}<a href="{{url}}">{{link}}</a>\n'
   for k,v of u
     console.log "V : " + v.name
-    if v.name
-      n = n + '<a href="' + v.name + '">' + v.name + '</a><br>\n'
-    else s = s + 1
-  n = n + "(#{s} x online)</br>\n"
+    n = n + mustache.render t, label: k, url: "meh", link: v
   n
 
 module.exports = (r) ->
   r.who = who r
-  r.user = user r.user
+  r.user = if r.user then user r.user else r.id
   r.who_css = if r.me then "mich" else if r.driver then "driver" else "passenger"
   r.dist_css = "dist_" + r.who_css
   r.pickupLabel = duration r.pickup

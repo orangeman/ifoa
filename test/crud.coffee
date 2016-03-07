@@ -6,12 +6,12 @@ require("./setup") "CRUD", (test) ->
     token = "abc"
     test.auth token, null, "user foo", () ->
       test.post from: "Berlin", to: "Leipzig", expire: 1000, token, (res) ->
-        test.get "/rides/" + res.id, (ride) ->
+        test.get "/ride/" + res.id, (ride) ->
           t.equal ride.to, "Leipzig", "Ziel passt"
           t.equal ride.from, "Berlin", "Start passt"
           t.equal ride.dist, 187, "Dist passt"
           setTimeout (() ->
-            test.get "/rides/" + res.id, (ride) ->
+            test.get "/ride/" + res.id, (ride) ->
               t.equal ride.status, "deleted", "Fahrt Expired"
             ), 1000
 

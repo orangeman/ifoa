@@ -34,15 +34,16 @@ module.exports = (title, run) ->
         cb JSON.parse res
 
     t.test.post = (ride, token, cb) ->
-      request.post {url: "http://localhost:5000", headers: 'token': token}, (err, r, res) ->
+      id = if ride.id then "/" + ride.id else ""
+      request.post {url: "http://localhost:5000/ride" + id, headers: 'token': token}, (err, r, res) ->
         cb JSON.parse res
       .end JSON.stringify ride
 
     t.test.auth = (session, ride, name, cb) ->
-      request.post {url: "http://localhost:5000/user", headers: 'token': 'XYZ'}, (err, r, res) ->
-        console.log "logged in " + res
+      ride = if ride then "/ride/" + ride else ""
+      request.post {url: "http://localhost:5000" + ride, headers: 'token': 'XYZ'}, (err, r, res) ->
         cb() if cb
-      .end JSON.stringify session: session, ride: ride, user: id: "A", name: name
+      .end JSON.stringify session: session, user: id: "A", name: name
 
     t.test.connect = (query, cb) ->
       sock = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
@@ -53,14 +54,14 @@ module.exports = (title, run) ->
         sock.onmessage = (msg) ->
           ride = JSON.parse msg.data
           cb ride #if ride.route
-      sock.reconnect = (q) ->
+      sock.reconnect = (q, c) ->
         s = sockjs "http://localhost:5000/sockjs", { 'force new connection': true }
         s.onopen = () ->
           s.send '{"session":"' + sock.token + '"}'
           s.send JSON.stringify q
           s.onmessage = (msg) ->
             ride = JSON.parse msg.data
-            cb ride #if ride.route
+            c ride if c #if ride.route
       sock
 
     t.test.stopServer = () -> rds.close()
