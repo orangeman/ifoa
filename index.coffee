@@ -6,7 +6,7 @@ htmlize = require "./ride"
 decode = require "./path"
 shoe = require "shoe"
 HOST = window.location.origin
-search = null
+API = "https://ifoa.herokuapp.com"
 
 
 $ () ->
@@ -21,7 +21,7 @@ $ () ->
 
   rides = $("#rides")
 #  (stream = shoe "https://ifoa.herokuapp.com/sockjs")
-  (stream = shoe "/sockjs")
+  (stream = shoe API)
   .pipe JSONStream.parse()
   .pipe es.map (ride, next) ->
     if ride.fail
@@ -231,7 +231,7 @@ autosuggest = (div, def) ->
       if text.length > 0
         console.log text
         foo = (f) -> console.log "Ui" + f
-        $.ajax HOST + "?q=" + encodeURI(text)
+        $.ajax API + "?q=" + encodeURI(text)
 #        , crossDomain: true
 #        , dataType: "jsonp"
         , jsonp: "callback"
