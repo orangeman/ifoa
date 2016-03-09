@@ -230,14 +230,15 @@ autosuggest = (div, def) ->
         index = -1
       if text.length > 0
         console.log text
-        foo = (f) -> console.log "Ui" + f
-        $.ajax API + "?q=" + encodeURI(text)
-#        , crossDomain: true
-#        , dataType: "jsonp"
-        , jsonp: "callback"
-        , jsonpCallback: "foo"
-        , success: (p) ->
-            render null, p
+        $.ajax
+          url: API + "?q=" + encodeURI(text.toString()) #+ " &callback=?"
+        #,  crossDomain: true
+        #dataType: "jsonp"
+        #  jsonp: "callback"
+        #  jsonpCallback: "foo"
+          success: (p) ->
+            console.log "GOT " + p
+            render null, p.split(",")
       return
     render places.length == 0, places
 

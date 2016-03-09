@@ -105,12 +105,17 @@ server = http.createServer (req, response) ->
           this.push render ride.value
           next()
       .pipe response
-  else if q = req.url.match /q=(.*)&callback=(.*)&/
-    response.writeHead 200, "Content-Type": "application/json"
+  else if req.url.match /info/
+    response.writeHead 200,
+      "Access-Control-Allow-Origin": "*"
+    response.end ""
+  else if q = req.url.match /q=(.*)/
+    response.writeHead 200,
+      "Content-Type": "text/plain"
+      "Access-Control-Allow-Origin": "*"
     suggest(decodeURI(q[1]))
     .pipe es.writeArray (e, a) ->
-      response.end "foo(" + JSON.stringify(a) + ");"
-    #.pipe response
+      response.end a.join ","
   else
     ecstatic req, response
 
