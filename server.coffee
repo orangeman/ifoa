@@ -77,7 +77,6 @@ server = http.createServer (req, response) ->
     fs.createReadStream __dirname + "/index.html"
     .pipe response
   else if m = req.url.match /path\/(.*)\/(.*)/
-    response.writeHead 200, "Content-Type": "application/json"
     getPath decodeURI(m[1]), decodeURI(m[2]), (path) ->
       response.end path
   else if m = req.url.match /ride\/(.*)/
@@ -106,8 +105,12 @@ server = http.createServer (req, response) ->
           this.push render ride.value
           next()
       .pipe response
-  else if q = req.url.match /q=(.*)/
-    suggest(decodeURI(q[1])).pipe response
+  else if q = req.url.match /q=(.*)&callback=(.*)&/
+    response.writeHead 200, "Content-Type": "application/json"
+    suggest(decodeURI(q[1]))
+    .pipe es.writeArray (e, a) ->
+      response.end "foo(" + JSON.stringify(a) + ");"
+    #.pipe response
   else
     ecstatic req, response
 
@@ -424,4 +427,4 @@ suggest = (text) ->
   text = text.trim().toUpperCase()
   names.createReadStream(start: text + ":999", end: text, reverse: true)
   .pipe es.mapSync (p) -> p.key.split("!")[1]
-  .pipe es.join ","
+  #.pipe es.join ","

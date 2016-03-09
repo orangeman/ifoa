@@ -21,7 +21,8 @@
     "shoe": "0.0.15",
     "sockjs": "^0.3.15",
     "tablesort": "^3.1.0",
-    "through2": "^2.0.0"
+    "through2": "^2.0.0",
+    "uglify-js": "~2.6.2"
   },
   "devDependencies": {
     "sockjs-client": "^1.0.3",
@@ -31,7 +32,7 @@
     "tape": "~4.4.0"
   },
   "scripts": {
-    "postinstall": "coffee -c *.coffee && browserify -t coffeeify -t brfs index.coffee > public/index.js",
+    "postinstall": "coffee -c *.coffee && browserify -t coffeeify -t brfs index.coffee |uglifyjs > public/index.js",
     "test": "coffee -c *.coffee test/*.coffee && ./node_modules/tape/bin/tape test/*.js | node_modules/tap-spec/bin/cmd.js",
     "start": "node server.js"
   },

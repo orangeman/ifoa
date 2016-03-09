@@ -1,8 +1,6 @@
+geolocator = require "./geolocator"
 JSONStream = require "JSONStream"
 tablesort = require "tablesort"
-through = require "through2"
-request = require "request"
-hyperglue = require "hyperglue"
 es = require "event-stream"
 htmlize = require "./ride"
 decode = require "./path"
@@ -12,6 +10,8 @@ search = null
 
 
 $ () ->
+  console.log "ORIG " + window.location.origin
+  console.log ""
 
   m = $(location).attr('pathname').match /\/(.*)\/(.*)/
   dest = autosuggest $("#dest"), if m then decodeURI m[2] else ""
@@ -86,10 +86,6 @@ $ () ->
       s + "&ride=" + window.location.href.split("#")[1], "Auth", "height=400,width=300"
     login()
 
-  login = () ->
-    request.post {url: "http://localhost:5000/login"}, (err, r, res) ->
-      console.log "RESPONSE: " + res
-    .end JSON.stringify username: "foo", password: "bar"
 
   map = L.map("map").setView [48.505, 9.09], 10
   L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}',
@@ -149,14 +145,15 @@ $ () ->
           panAndZoom points
 
   paths = {}
-  getPath = (from, to, done) ->
+  getPath = (from, to, cb) ->
     if paths[from+to]
-      done decode paths[from+to]
+      cb decode paths[from+to]
     else
-      request.get HOST + "/paths/" + encodeURI(from) + "/" + encodeURI(to)
-      .pipe es.mapSync (p) ->
-        paths[from+to] = p.toString()
-        done decode p.toString()
+      console.log "hi"
+      $.ajax HOST + "/path/" + encodeURI(from) + "/" + encodeURI(to)
+      , success: (p) ->
+        paths[from+to] = p
+        cb decode p
 
   panAndZoom = (points) ->
     bbx = [[99999999, 99999999], [0, 0]]
@@ -232,9 +229,15 @@ autosuggest = (div, def) ->
       if k == 8 # backspace (delete a character)
         index = -1
       if text.length > 0
-        request.get HOST + "/q=" + encodeURI(text)
-        .pipe(es.split ",").pipe es.writeArray render
-        .on "end", () ->
+        console.log text
+        foo = (f) -> console.log "Ui" + f
+        $.ajax HOST + "?q=" + encodeURI(text)
+#        , crossDomain: true
+#        , dataType: "jsonp"
+        , jsonp: "callback"
+        , jsonpCallback: "foo"
+        , success: (p) ->
+            render null, p
       return
     render places.length == 0, places
 
