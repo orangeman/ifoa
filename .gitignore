@@ -1,5 +1,6 @@
 node_modules/
 data
+lol.log
 ride.js
 index.js
 server.js
