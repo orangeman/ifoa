@@ -135,12 +135,12 @@ shoe (sockjs) ->
       session = q.session
       return
     if !session
-      console.log "NO SESSION"
+      console.log " NO SESSION"
       return sockjs.write JSON.stringify(fail: "ACCESS DENIED") + "\n"
-    console.log "SESSION " + session + " USER " + JSON.stringify user[session]
+    console.log " USER " + JSON.stringify user[session] + "  SESSION " + session
+    q.id = myRide.id if !q.id && myRide && myRide.id
     post q, user[session] || {},
       ((ride) -> # INSERT
-        console.log ride.id + " SESSION " + session
         if !myRide
           (sockets[ride.id] ||= {})[path] = sockjs
         myRide = ride
@@ -164,12 +164,12 @@ shoe (sockjs) ->
       )
   sockjs.on "close", () ->
     if myRide
-      console.log "CLOSE"
-      console.log "USER " + JSON.stringify myRide.user
-      console.log "SUSSER " + JSON.stringify user[session]
+      console.log "\nCLOSE"
+      console.log " USER " + JSON.stringify myRide.user
+      console.log " SUSSER " + JSON.stringify user[session]
       delete sockets[myRide.id][path]
       if !user[session] || Object.keys(user[session]).length == 0
-        console.log  "NO USER"
+        console.log  " NO USER"
         remove myRide
 .installHandlers server, prefix: "/sockjs"
 
@@ -181,7 +181,7 @@ post = (q, u, toInsert, toUpdate, onFail) ->
     if !r
       ride = id: uid(), user: u
     else
-      console.log "EXISTING " + JSON.stringify r
+      console.log " EXISTING version " + r.time + "  " + r.route + "  " + r.status + " " + JSON.stringify r.user
       if r.user && Object.keys(r.user).length > 0
         if (true for id,v of r.user when u[id]).length == 0
           return onFail "ACCESS DENIED"
@@ -189,11 +189,10 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       if q.user
         for id,v of q.user
           if u[id]
-            console.log "ADD USER " + JSON.stringify v
+            console.log "  ADD USER " + JSON.stringify v
             (ride.user || = {})[id] = v
           else
-            console.log "NOT ALLOWED TO ADD USER " + JSON.stringify v
-      rides.del r.route + ">" + r.route + "#" + r.id if r
+            console.log "  NOT ALLOWED TO ADD USER " + JSON.stringify v
     delete ride.user if ride.user && Object.keys(ride.user).length == 0
     ride.time = new Date().getTime()
     if q.time && q.time > ride.time
@@ -204,15 +203,14 @@ post = (q, u, toInsert, toUpdate, onFail) ->
     q.route = decodeURI q.route if q.route
     q.route = "/#{decodeURI(q.from)}/#{decodeURI(q.to)}" if q.from && q.to
     if r && (!q.route || q.route == r.route) && r.status != "deleted"
-      console.log "UPDATE " + ride.route + ">" + ride.route + "#" + r.time
+      console.log " UPDATE " + ride.route + ">" + ride.route + "#" + r.time
       ride.det = 0
       ride.pickup = 0
       ride.dropof = 0
       toUpdate ride
     else
       if r && r.status != "deleted"
-        console.log "UNMATCH " + r.id + " :: " + r.time + r.route
-        remove id: ride.id, time: r.time, route: r.route, url: r.url, status: "deleted", user: ride.user
+        remove id: r.id, time: r.time, route: r.route, user: r.user
         ride.status = "updated"
       ride.route = q.route if q.route
       m = ride.route.match /\/(.*)\/(.*)/
@@ -220,7 +218,6 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       ride.from = m[1]
       ride.to = m[2]
       lookUp ride.from, ride.to, (d) ->
-        console.log "DIST " + d
         return onFail "UNKNOWN ROUTE" if d == 99999999
         ride.dist = d
         if q.expire
@@ -267,7 +264,7 @@ clean = (t) ->
           console.log "no clean up " + JSON.stringify ride
       else
         nextTime = ride.time
-        console.log "DONE CLEAN up to " + latest + " Next in " + (nextTime - now)
+        console.log "DONE CLEAN up to " + latest + " Next in " + (nextTime - now) + "\n"
         rides.put "latest_cleanup", latest
         setTimeout clean, nextTime - now
         this.destroy()
@@ -286,7 +283,7 @@ rides.get "latest_cleanup", (err, latest) ->
 
 
 insert = (query, after, done) ->
-  console.log "INSERT " + "id:" + query.id + " :: " + query.time + query.route
+  console.log "  INSERT " + "id:" + query.id + " :: " + query.time + query.route
   cache query.route
   .pipe notifyAbout query, after, done
   .pipe(JSONStream.stringify(false), end: false)
@@ -299,24 +296,22 @@ search = (query, since) ->
 remove = (query) ->
   query.status = "deleted"
   query.time = new Date().getTime()
-  console.log "REMOVE " + query.id + " :: " + query.time + query.route
+  console.log "  REMOVE " + query.id + " :: " + query.time + query.route
   cache query.route
   .pipe match query
   .pipe notifyAbout query
-  .on "end", () ->
-    console.log "removed.\n"
 
 cache = (route) ->
-  console.log " :: cache " + route
-  rides.createReadStream(gt: route + ">", lt: route+">~")
+  console.log "  :: cache " + route
+  rides.createReadStream(gt: route + ">", lt: route+">/~")
 
 fresh = (since) ->
-  console.log " :: search  since " + since
+  console.log "  :: search  since " + since
   rides.createReadStream(gt: since + "/", lte: new Date().getTime() + "/", reverse: true)
 
 DET = 300
 match = (q) ->
-  console.log "   match " + q.route
+  console.log "     match " + q.route
   dist = getDist()
   det = (driver, passenger, done) ->
     dist driver.from, passenger.from, (pickup) ->
@@ -331,7 +326,7 @@ match = (q) ->
     r = ride.value
     latest = r.time if r.time > latest
     if visited[r.id]
-      console.log "     visited " + r.id
+      console.log "     -x- visited " + r.id
       rides.del ride.key
       return next()
     if q.status == "deleted"
@@ -339,7 +334,7 @@ match = (q) ->
       visited[r.id] = true
       if ride.key.match /#del/
         return next()
-      console.log " <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id
+      console.log "     <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id
       rides.del r.route + ">" + q.route + "#" + q.id
       return next()
     visited[r.id] = true
@@ -349,7 +344,7 @@ match = (q) ->
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
         if r.status == "deleted"
-          console.log " --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
+          console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
           rides.del q.route + ">" + r.route + "#" + r.id, (err) =>
             this.push ride
             next()
@@ -361,14 +356,14 @@ match = (q) ->
             r.driver = true
           else
             r.passenger = true
-          console.log " --> MATCH " + q.route + " ---> " + r.from + "/" + r.to + "#" + r.id
-          rides.put q.route + ">/" + r.from + "/" + r.to + "#" + r.id, r, (err) =>
+          console.log "     --> MATCH " + q.route + ">" + r.route + "#" + r.id
+          rides.put q.route + ">" + r.route + "#" + r.id, r, (err) =>
             this.push ride
             next()
       else
         next()
   .on "end", () ->
-    console.log " END " + latest
+    console.log "     end match until " + latest
     rides.put q.route + ">" + "#latest", latest
 
 
@@ -380,9 +375,8 @@ notifyAbout = (q, after, done) ->
       latest = ride.value
       return next()
     r = ride.value
-    console.log JSON.stringify r
     if r.id == q.id
-      console.log "     ME " + r.time + "/" + r.from + "/" + r.to
+      console.log "         ME " + r.time + r.route
       r.me = true
     if r.status != "deleted"
       q.det = r.det
@@ -396,30 +390,29 @@ notifyAbout = (q, after, done) ->
         delete q.driver
       q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
       q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
-
     socks = sockets[r.id] ||= {}
-    console.log "SOCKS " + JSON.stringify Object.keys(socks)
+    console.log "         SOCKS " + JSON.stringify Object.keys(socks)
     if Object.keys(socks).length > 0
       unless q.status == "deleted"
-        console.log " <-- MATCH " + r.route + " <--- " + q.route + "#" + q.id
+        console.log "     <-- MATCH " + r.route + ">" + q.route + "#" + q.id
         rides.put r.route + ">" + q.route + "#" + q.id, q
       if r.id == q.id
         q.me = true
         for p, sock of socks
           sock.write JSON.stringify(q) + "\n"
-          console.log "     NOTIFY SELF   " + r.time + r.route
+          console.log "         NOTIFY SELF   " + r.time + r.route
         delete q.me
       else if q.status != "private"
         for p, sock of socks
-          console.log "     NOTIFY ELSE   " + r.time + r.route
+          console.log "         NOTIFY ELSE   " + r.time + r.route
           sock.write JSON.stringify(q) + "\n"
     else if !r.user || Object.keys(r.user) == 0
-      console.log "     no socket " + JSON.stringify r
-      console.log " --> UNMATCH " + q.route + ">/" + r.from + "/" + r.to + "#" + r.id
-      rides.del q.route + ">/" + r.from + "/" + r.to + "#" + r.id
+      console.log "         no socket " + r.route + "#" + r.id
+      console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
+      rides.del q.route + ">" + r.route + "#" + r.id
       return next null, status: "deleted", id: r.id, time: r.time
     if r.time > after && !r.me && r.status != "private"
-      console.log "     send " + r.time + "/" + r.from + "/" + r.to
+      console.log "          send " + r.time + r.route
       next(null, r)
     else
       next()

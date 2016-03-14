@@ -4,6 +4,7 @@ ride.js
 index.js
 server.js
 routing.js
+random.js
 graphhopper.js
 public/index.js
 test/*.js
