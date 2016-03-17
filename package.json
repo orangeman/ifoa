@@ -21,7 +21,7 @@
     "shoe": "0.0.15",
     "sockjs": "^0.3.15",
     "tablesort": "^3.1.0",
-    "through2": "^2.0.0",
+    "through2": "^2.0.0"
   },
   "devDependencies": {
     "sockjs-client": "^1.0.3",
