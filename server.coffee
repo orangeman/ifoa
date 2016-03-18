@@ -77,8 +77,9 @@ server = http.createServer (req, response) ->
     fs.createReadStream __dirname + "/index.html"
     .pipe response
   else if m = req.url.match /path\/(.*)\/(.*)/
-    getPath decodeURI(m[1]), decodeURI(m[2]), (path) ->
-      response.end path
+    getPath decodeURI(m[1]), decodeURI(m[2]), (d) ->
+      console.log "PATH NOT FOUND " + d.err if d.err
+      response.end d.path
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"
@@ -220,8 +221,9 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       ride.from = m[1]
       ride.to = m[2]
       lookUp ride.from, ride.to, (d) ->
-        return onFail "UNKNOWN ROUTE" if d == 99999999
-        ride.dist = d
+        return onFail "UNKNOWN ROUTE " + d.err if d.err
+        ride.dist_time = d.time
+        ride.dist = d.dist
         if q.expire
           ride.expire = q.expire
           rides.put ride.time + q.expire, status: "deleted", id: ride.id, time: ride.time + q.expire, route: ride.route, url: ride.url
@@ -264,8 +266,9 @@ clean = (t) ->
           remove ride
         else
           console.log "no clean up " + JSON.stringify ride
-      else
         nextTime = ride.time
+      else
+        nextTime = ride.time unless nextTime
         console.log "DONE CLEAN up to " + latest + " Next in " + (nextTime - now) + "\n"
         rides.put "latest_cleanup", latest
         setTimeout clean, nextTime - now
@@ -318,7 +321,7 @@ match = (q) ->
   det = (driver, passenger, done) ->
     dist driver.from, passenger.from, (pickup) ->
       dist passenger.to, driver.to, (dropoff) ->
-        done pickup, passenger.dist, dropoff, driver.dist
+        done pickup, dropoff
   visited = {}
   latest = 0
   through.obj (ride, enc, next) ->
@@ -340,9 +343,10 @@ match = (q) ->
       rides.del r.route + ">" + q.route + "#" + q.id
       return next()
     visited[r.id] = true
-    det r, q, (pickup, join, dropoff, alone) =>
-      detDriver = pickup + join + dropoff - alone
-      detPassenger = pickup + alone + dropoff - join
+    det r, q, (pickup, dropoff) =>
+      console.log "DETOUR COMPUTATION ERROR " + pickup.err + " " + dropoff.err if pickup.err || dropoff.err
+      detDriver = pickup.dist + q.dist + dropoff.dist - r.dist
+      detPassenger = pickup.dist + r.dist + dropoff.dist - q.dist
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
         if r.status == "deleted"
@@ -351,9 +355,10 @@ match = (q) ->
             this.push ride
             next()
         else
-          r.dist = alone
-          r.pickup = pickup
-          r.dropoff = dropoff
+          r.pickup = pickup.dist
+          r.pickup_time = pickup.time
+          r.dropoff = dropoff.dist
+          r.dropoff_time = dropoff.time
           if detDriver < detPassenger
             r.driver = true
           else

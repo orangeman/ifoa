@@ -10,7 +10,7 @@ rds = null
 server = (cb) ->
   exec "rm -rf data/rides", (err, out) ->
     rds = spawn "node ./server.js"
-    rds.stdout.pipe process.stdout
+    #rds.stdout.pipe process.stdout
     rds.stderr.pipe process.stderr
     setTimeout cb, 1500
 

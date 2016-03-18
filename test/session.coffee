@@ -30,7 +30,6 @@ require("./setup") "SESSION", (test) ->
           @send '{"session":"' + user.token + '"}\n'
           @send JSON.stringify id: ride.id, seats: 5
           @onmessage = (msg) ->
-            console.log "MSG " + msg.data
             r = JSON.parse(msg.data)
             t.equal r.route, "/Berlin/Munich"
             t.equal r.seats, 5, "seats window 2"

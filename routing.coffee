@@ -15,20 +15,25 @@ key = (from, to) ->
 lookup = (k, from, to, cb) ->
   dists.get k, (err, d) ->
     unless err
-      cb parseInt d
+      s = d.split "|"
+      if s.length == 2
+        cb dist: parseInt(s[0]), time: parseInt(s[1])
+      else # tmp legacy hack
+        cb dist: parseInt(d), time: Math.floor(parseInt(d) * 0.6)
     else
       graphhop k, from, to, (d) ->
-        cb d.dist
+        console.log "ROUTE NOT FOUND " + d.err if d.err
+        cb d
 
 graphhop = (k, from, to, cb) ->
   place from, (orig) ->
-    return cb dist: 99999999 if !orig
+    return cb dist: 99999999, err: from if !orig
     place to, (dest) ->
-      return cb dist: 99999999 if !dest
+      return cb dist: 99999999, err: to if !dest
       gh.dist orig, dest, (d) ->
-        log.write "GH #{k}\n"
-        dists.put k, d.dist
+        dists.put k, d.dist + "|" + d.time
         paths.put k, d.path, (e) -> cb d
+        log.write "GH #{k}\n"
 
 place = (id, cb) ->
   places.get id.toUpperCase(), (e, p) ->
@@ -38,10 +43,10 @@ module.exports.path = (from, to, cb) ->
   k = key from, to
   paths.get k, (err, path) ->
     unless err
-      cb path
+      cb path: path
     else
       graphhop k, from, to, (d) ->
-        cb d.path
+        cb d
 
 module.exports.lookup = (from, to, cb) ->
   lookup key(from, to), from, to, cb
@@ -59,7 +64,7 @@ module.exports.dist = () ->
           distCache[k] = d
           cb d
     else
-      cb 0
+      cb dist: 0
 
 # alternate names
 # min dist between cities

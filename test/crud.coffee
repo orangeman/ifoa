@@ -20,6 +20,6 @@ require("./setup") "CRUD", (test) ->
       token = "abc"
       test.auth token, null, "user foo", () ->
         test.post route: "/Berlin/Leip", expire: 1000, token, (res) ->
-          t.equal res.fail, "UNKNOWN ROUTE", "place Leip"
+          t.equal res.fail, "UNKNOWN ROUTE Leip", "place Leip"
           test.post route: "/Ber/Leipzig", expire: 1000, token, (res) ->
-            t.equal res.fail, "UNKNOWN ROUTE", "place Ber"
+            t.equal res.fail, "UNKNOWN ROUTE Ber", "place Ber"

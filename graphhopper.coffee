@@ -12,18 +12,19 @@ distance = (from, to, done) ->
       done null
     else
       #console.log page
-      #console.log resp
       json = JSON.parse(page)
       #console.log json.paths?[0]?.points
-      if json.paths?[0]?.distance
-        done dist: Math.floor(json.paths?[0]?.distance / 1000), path: json.paths?[0]?.points
+      if (p = json.paths?[0])?.distance
+        done
+          dist: Math.floor(p.distance / 1000)
+          time: Math.floor(p.time / 60000)
+          path: p.points
       else
         done null
 
 dist = (from, to, done) ->
   if !(from && to && from.latitude && to.latitude)
-    console.log "NO LAT/LON " + from + "->" + to
-    done dist: 99999999
+    done err: "NO lat/lon" + from + "->" + to
     return
   distance from, to, (d) =>
     if d
@@ -33,7 +34,6 @@ dist = (from, to, done) ->
         if d
           done(d)
         else
-          console.log "NOT FOUND " + from.name+" -> "+to.name
-          done dist: 99999999
+          done err: "GRAPHHOPPER FAIL " + from.name+" -> "+to.name
 
 module.exports.dist = dist

@@ -28,16 +28,13 @@ require("./setup") "USER", (test) ->
     t.plan 5
     firstLogIn = false
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
-      console.log "FIRST BROWSER " + JSON.stringify ride
       if !ride.user
         test.auth user.token, ride.id, "foo"
       else if !ride.seats && !firstLogIn
         t.equal ride.user.name, "foo", "User Name"
-        console.log "LOGGED IN"
         firstLogIn = true
         setTimeout (() -> # second browser
           u = test.connect {route: "/Berlin/Munich", id: ride.id}, (r) ->
-            console.log "SECOND BROWSER " + JSON.stringify r
             if r.fail
               t.equal r.fail, "ACCESS DENIED", "no access"
               test.auth u.token, ride.id, "foo", () ->

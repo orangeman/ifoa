@@ -9,7 +9,6 @@ require("./setup") "STREAM", (test) ->
       t.equal r.route, "/Berlin/Leipzig", "Erkenne Dich selbst"
       t.equal r.pickup, 0, "Kein Umweg"
       t.equal r.dist, 187, "Distanz"
-      console.log "ID "+r.id
       t.ok r.me, "Me self"
 
   test ":: match each other", (t) ->
