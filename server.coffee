@@ -389,15 +389,15 @@ notifyAbout = (q, after, done) ->
     if r.status != "deleted"
       q.det = r.det
       q.pickup = r.pickup
+      q.pickup_time = r.pickup_time
       q.dropoff = r.dropoff
+      q.dropoff_time = r.dropoff_time
       if r.passenger
         q.driver = true
         delete q.passenger
       if r.driver
         q.passenger = true
         delete q.driver
-      q.dist = r.dist + r.det - r.pickup - r.dropoff if r.driver
-      q.dist = r.pickup + r.dist + r.dropoff - r.det if r.passenger
     socks = sockets[r.id] ||= {}
     console.log "         SOCKS " + JSON.stringify Object.keys(socks)
     if Object.keys(socks).length > 0
