@@ -64,7 +64,7 @@ module.exports.dist = () ->
           distCache[k] = d
           cb d
     else
-      cb dist: 0
+      cb dist: 0, time: 0
 
 # alternate names
 # min dist between cities
