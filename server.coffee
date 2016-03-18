@@ -197,6 +197,8 @@ post = (q, u, toInsert, toUpdate, onFail) ->
     ride.time = new Date().getTime()
     if q.time && q.time > ride.time
       ride.time = q.time
+    ride.dep = q.dep if q.dep
+    ride.dep = ride.time
     ride.seats = q.seats if q.seats
     ride.details = q.details if q.details
     ride.status = q.status || ride.status || "private"
