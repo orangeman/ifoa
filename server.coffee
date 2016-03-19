@@ -200,7 +200,6 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       ride.time = q.time
     ride.dep = q.dep if q.dep
     ride.dep = ride.time + 60000 if !ride.dep
-    ride.dep = ride.time
     ride.mode = q.mode if q.mode
     ride.price = q.price if q.price
     ride.seats = q.seats if q.seats
