@@ -32,7 +32,7 @@ server = http.createServer (req, response) ->
       u = user[req.headers.token]
       if q.session
         return response.end "ACCESS DENIED" if req.headers.token != "XYZ"
-        return if !q.user || !q.user.id
+        return if !q.user
         u = user[q.session] ||= {}
         console.log "USER LOOKUP" + JSON.stringify u
         for k,v of q.user
