@@ -35,7 +35,7 @@ graphhop = (k, from, to, cb) ->
         paths.put k, d.path, (e) -> cb d
         log.write "GH #{k}\n"
 
-place = (id, cb) ->
+module.exports.place = place = (id, cb) ->
   places.get id.toUpperCase(), (e, p) ->
     cb (JSON.parse(p) if p)
 

@@ -14,6 +14,7 @@ routing = require "./routing"
 getDist = routing.dist
 getPath = routing.path
 lookUp = routing.lookup
+getPlace = routing.place
 render = require "./ride"
 nextTime = 9999999999999999
 EXPIRE = 180 * 1000
@@ -80,6 +81,9 @@ server = http.createServer (req, response) ->
     getPath decodeURI(m[1]), decodeURI(m[2]), (d) ->
       console.log "PATH NOT FOUND " + d.err if d.err
       response.end d.path
+  else if m = req.url.match /place\/(.*)/
+    getPlace decodeURI(m[1]), (p) ->
+      response.end JSON.stringify [p.latitude, p.longitude]
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"
