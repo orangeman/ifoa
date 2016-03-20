@@ -83,12 +83,14 @@ server = http.createServer (req, response) ->
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
+        "Cache-Control": "public, max-age=31536000"
       response.end d.path
   else if m = req.url.match /place\/(.*)/
     getPlace decodeURI(m[1]), (p) ->
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
+        "Cache-Control": "public, max-age=31536000"
       response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
@@ -124,6 +126,7 @@ server = http.createServer (req, response) ->
     response.writeHead 200,
       "Content-Type": "text/plain"
       "Access-Control-Allow-Origin": "*"
+      "Cache-Control": "public, max-age=86400" # day
     suggest(decodeURI(q[1]))
     .pipe es.writeArray (e, a) ->
       response.end a.join ","
