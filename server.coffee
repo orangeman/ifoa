@@ -81,11 +81,13 @@ server = http.createServer (req, response) ->
     getPath decodeURI(m[1]), decodeURI(m[2]), (d) ->
       console.log "PATH NOT FOUND " + d.err if d.err
       response.writeHead 200,
+        "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
       response.end d.path
   else if m = req.url.match /place\/(.*)/
     getPlace decodeURI(m[1]), (p) ->
       response.writeHead 200,
+        "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
       response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
   else if m = req.url.match /ride\/(.*)/
