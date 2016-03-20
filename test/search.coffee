@@ -2,6 +2,14 @@ require("./setup") "SEARCH", (test) ->
 
 
   test ":: find ride", (t) ->
+    t.plan 1
+    test.connect {route: "/Berlin/Leipzig", since: 1}, (r) ->
+      if r.me
+        test.find "/Berlin/Leipzig", (rides) ->
+          t.equal rides.length, 1, "Ein Treffer"
+
+
+  test ":: find rides", (t) ->
     t.plan 5
     token = "abc"
     test.auth token, null, "user foo", () ->
