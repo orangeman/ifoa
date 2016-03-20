@@ -5,7 +5,7 @@ require("./setup") "SEARCH", (test) ->
     t.plan 1
     test.connect {route: "/Berlin/Leipzig", since: 1}, (r) ->
       if r.me
-        test.find "/Berlin/Leipzig", (rides) ->
+        test.find "/Berlin/Leipzig/", (rides) ->
           t.equal rides.length, 1, "Ein Treffer"
 
 

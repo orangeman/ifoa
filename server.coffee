@@ -77,7 +77,7 @@ server = http.createServer (req, response) ->
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
     .pipe response
-  else if m = req.url.match /path\/(.*)\/(.*)/
+  else if m = req.url.match /path\/([^\/]*)\/([^\/]*)/
     getPath decodeURI(m[1]), decodeURI(m[2]), (d) ->
       console.log "PATH NOT FOUND " + d.err if d.err
       response.writeHead 200,
@@ -85,7 +85,7 @@ server = http.createServer (req, response) ->
         "Access-Control-Allow-Origin": "*"
         "Cache-Control": "public, max-age=31536000"
       response.end d.path
-  else if m = req.url.match /place\/(.*)/
+  else if m = req.url.match /place\/([^\/]*)/
     getPlace decodeURI(m[1]), (p) ->
       response.writeHead 200,
         "Content-Type": "application/json"
@@ -98,7 +98,7 @@ server = http.createServer (req, response) ->
     rides.createReadStream gte: "id:" + m[1], lt: "id:" + m[1] + "~"
     .pipe es.mapSync (p) -> JSON.stringify p.value
     .pipe response
-  else if m = req.url.match /(\/.*\/.*)/
+  else if m = req.url.match /(\/[^\/]*\/[^\/]*)/
     console.log "\nGET" + req.url + "  " +  req.connection.remoteAddress + "   " + decodeURI m[1]
     if req.headers.accept && req.headers.accept == "application/json"
       console.log "JSON"
