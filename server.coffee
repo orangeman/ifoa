@@ -87,7 +87,7 @@ server = http.createServer (req, response) ->
     getPlace decodeURI(m[1]), (p) ->
       response.writeHead 200,
         "Access-Control-Allow-Origin": "*"
-      response.end JSON.stringify [p.latitude, p.longitude]
+      response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"

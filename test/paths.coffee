@@ -6,7 +6,7 @@ require("./setup") "PATHS", (test) ->
   test ":: get place", (t) ->
     t.plan 1
     get "http://localhost:5000/place/Berlin", (e, r, place) ->
-      t.deepEqual JSON.parse(place), ["52.52437","13.41053"]
+      t.deepEqual JSON.parse(place), [52.52437, 13.41053]
 
   test ":: get path", (t) ->
     t.plan 1
