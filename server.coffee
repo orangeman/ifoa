@@ -100,14 +100,18 @@ server = http.createServer (req, response) ->
     .pipe response
   else if m = req.url.match /(\/[^\/]*\/[^\/]*)/
     console.log "\nGET" + req.url + "  " +  req.connection.remoteAddress + "   " + decodeURI m[1]
-    if req.headers.accept && req.headers.accept == "application/json"
+    if req.headers.accept && req.headers.accept.match /json/
       console.log "JSON"
       response.writeHead 200, "Content-Type": "application/json"
-      cache(decodeURI m[1]).pipe es.map (ride, cb) ->
-        return cb() if ride.key.match /#latest/
-        cb null, ride.value
-      .pipe es.writeArray (err, rides) ->
-        response.end JSON.stringify rides
+      cc = cache(decodeURI m[1]).pipe es.map (r, cb) ->
+        return cb() if r.key.match /#latest/
+        cb null, r.value
+      if req.headers.accept == "application/json"
+        cc.pipe es.writeArray (err, rides) ->
+          response.end JSON.stringify rides
+      else
+        cc.pipe JSONStream.stringify(false)
+        .pipe response
     else
       response.writeHead 200, "Content-Type": "text/html"
       fs.createReadStream __dirname + "/index.html"
