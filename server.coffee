@@ -105,7 +105,7 @@ server = http.createServer (req, response) ->
       rides.createReadStream gte: key, lt: key + "~"
       .pipe es.mapSync (p) -> JSON.stringify p.value
       .pipe response
-  else if m = decodeURI(req.url).match /(\/[^\/]+\/[^\/]+)/
+  else if m = decodeURI(req.url).match /(\/[^\/\d]+\/[^\/]+)/
     console.log "\nGET" + req.url + "  " +  req.connection.remoteAddress + "   " + m[1]
     console.log "header " + req.headers.accept
     if req.headers.accept && req.headers.accept.match /json/
