@@ -23,3 +23,11 @@ require("./setup") "CRUD", (test) ->
           t.equal res.fail, "UNKNOWN ROUTE Leip", "place Leip"
           test.post route: "/Ber/Leipzig", expire: 1000, token, (res) ->
             t.equal res.fail, "UNKNOWN ROUTE Ber", "place Ber"
+
+    test ":: meaningless route", (t) ->
+      t.plan 1
+      token = "abc"
+      test.auth token, null, "user foo", () ->
+        test.post route: "/Berlin/Berlin", expire: 1000, token, (res) ->
+          console.log JSON.stringify res
+          t.ok res.id, "should not crash"

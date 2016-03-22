@@ -49,14 +49,16 @@ module.exports.path = (from, to, cb) ->
         cb d
 
 module.exports.lookup = (from, to, cb) ->
-  lookup key(from, to), from, to, cb
+  if k = key from, to
+    lookup k, from, to, cb
+  else
+    cb dist: 0, time: 0
 
 module.exports.dist = () ->
   distCache = {}
 
   (from, to, cb) ->
-    k = key from, to
-    if k
+    if k = key from, to
       if d = distCache[k]
         cb d
       else
