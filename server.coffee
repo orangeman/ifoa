@@ -174,8 +174,6 @@ shoe (sockjs) ->
       return sockjs.write JSON.stringify(fail: "ACCESS DENIED") + "\n"
     console.log " USER " + JSON.stringify user[session] + "  SESSION " + session
     q.id = myRide.id if !q.id && myRide && myRide.id
-    if !q.id && !q.route
-      return console.log "NO ID and NO ROUTE!"
     post q, user[session] || {},
       ((ride) -> # INSERT
         if !myRide
@@ -254,6 +252,8 @@ post = (q, u, toInsert, toUpdate, onFail) ->
         remove id: r.id, time: r.time, route: r.route, user: r.user
         ride.status = "updated"
       ride.route = q.route if q.route
+      if !ride.route
+        return onFail "NO ROUTE"
       m = ride.route.match /\/(.*)\/(.*)/
       return unless m
       ride.from = m[1]
