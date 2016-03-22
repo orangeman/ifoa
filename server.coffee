@@ -190,7 +190,7 @@ shoe (sockjs) ->
           (sockets[ride.id] ||= {})[path] = sockjs
         myRide = ride
         rides.put ride.time + ride.route, ride
-        rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
+        #rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
         cache ride.route
         .pipe notifyAbout ride, 1
       ), ((fail) ->
@@ -206,6 +206,7 @@ shoe (sockjs) ->
       if !user[session] || Object.keys(user[session]).length == 0
         console.log  " NO USER"
         remove myRide
+        rides.put myRide.time + myRide.route, myRide
 .installHandlers server, prefix: "/sockjs"
 
 user = {}
@@ -453,8 +454,9 @@ notifyAbout = (q, after, done) ->
           sock.write JSON.stringify(q) + "\n"
     else if !r.user || Object.keys(r.user) == 0
       console.log "         no socket " + r.route + "#" + r.id
-      console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
+      console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id + " and remove"
       rides.del q.route + ">" + r.route + "#" + r.id
+      rides.put new Date().getTime() + r.route, status: "deleted", id: r, time: r.time, route: r.route
       return next null, status: "deleted", id: r.id, time: r.time
     if r.time > after && !r.me && r.status != "private"
       console.log "          send " + r.time + r.route

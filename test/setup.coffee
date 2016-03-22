@@ -36,7 +36,7 @@ module.exports = (title, run) ->
     t.test.post = (ride, token, cb) ->
       id = if ride.id then "/" + ride.id else ""
       request.post {url: "http://localhost:5000/ride" + id, headers: 'token': token}, (err, r, res) ->
-        cb JSON.parse res
+        cb JSON.parse res if res
       .end JSON.stringify ride
 
     t.test.auth = (session, ride, name, cb) ->
