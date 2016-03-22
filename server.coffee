@@ -41,9 +41,18 @@ server = http.createServer (req, response) ->
           u[k] = v
         console.log "USER AFTER" + JSON.stringify u
       if !req.url.match /ride/
-        return response.end "OK"
+        return response.end JSON.stringify fail: "no ride url"
       if !u
-        return response.end "NO USER"
+        if q.user
+          # sig = hmac user
+          sig = "ABC"
+          if req.headers.token == sig
+            console.log "AUTH USER (proxy)" + JSON.stringify q.user
+            u = q.user
+          else
+            console.log "AUTHENTICATION FAILED " + JSON.stringify q.user
+      if !u
+        return response.end JSON.stringify fail: "no user"
       console.log "USER " + JSON.stringify u
       if m = req.url.match /ride\/(.+)/
         console.log "ride ID = " + m[1]
