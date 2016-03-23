@@ -206,6 +206,7 @@ shoe (sockjs) ->
       if !user[session] || Object.keys(user[session]).length == 0
         console.log  " NO USER"
         remove myRide
+        console.log "DELETE " +  myRide.time + myRide.route
         rides.put myRide.time + myRide.route, myRide
 .installHandlers server, prefix: "/sockjs"
 
@@ -378,6 +379,8 @@ match = (q) ->
       visited[r.id] = true
       console.log "     <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id + " because DELETED"
       rides.del r.route + ">" + q.route + "#" + q.id
+      #console.log "         REMOVE FROM LOG " + ride.key
+      #rides.del ride.key
       return next()
     visited[r.id] = true
     det r, q, (pickup, dropoff) =>
@@ -387,10 +390,14 @@ match = (q) ->
       r.det = Math.min detDriver, detPassenger
       if r.det < DET
         if r.status == "deleted"
-          console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
-          rides.del q.route + ">" + r.route + "#" + r.id, (err) =>
-            this.push ride
-            next()
+          rides.get q.route + ">" + r.route + "#" + r.id, (err, existing) ->
+            if existing
+              console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
+              rides.del q.route + ">" + r.route + "#" + r.id, (err) =>
+                this.push ride
+                next()
+            else
+              next()
         else
           r.pickup = pickup.dist
           r.pickup_time = pickup.time
@@ -454,8 +461,8 @@ notifyAbout = (q, after, done) ->
       console.log "         no socket " + r.route + "#" + r.id
       console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
       rides.del q.route + ">" + r.route + "#" + r.id
-      console.log "PUT DELETE " + new Date().getTime() + r.route
-      rides.put new Date().getTime() + r.route, status: "deleted", id: r.id, time: r.time, route: r.route
+      #console.log "         PUT DELETE " + new Date().getTime() + r.route
+      #rides.put new Date().getTime() + r.route, status: "deleted", id: r.id, time: r.time, route: r.route
       return next null, status: "deleted", id: r.id, time: r.time
     if r.time > after && !r.me && r.status != "private"
       console.log "          send " + r.time + r.route
