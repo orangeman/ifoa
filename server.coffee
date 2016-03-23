@@ -95,7 +95,7 @@ server = http.createServer (req, response) ->
         "Cache-Control": "public, max-age=31536000"
       response.end d.path
   else if m = decodeURI(req.url).match /place\/([^\/\d]*)/
-    getPlace m[1]), (p) ->
+    getPlace m[1], (p) ->
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
