@@ -86,16 +86,16 @@ server = http.createServer (req, response) ->
     response.writeHead 200, "Content-Type": "text/html"
     fs.createReadStream __dirname + "/index.html"
     .pipe response
-  else if m = req.url.match /path\/([^\/\d]*)\/([^\/]*)/
-    getPath decodeURI(m[1]), decodeURI(m[2]), (d) ->
+  else if m = decodeURI(req.url).match /path\/([^\/\d]*)\/([^\/]*)/
+    getPath m[1], m[2], (d) ->
       console.log "PATH NOT FOUND " + d.err if d.err
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
         "Cache-Control": "public, max-age=31536000"
       response.end d.path
-  else if m = req.url.match /place\/([^\/\d]*)/
-    getPlace decodeURI(m[1]), (p) ->
+  else if m = decodeURI(req.url).match /place\/([^\/\d]*)/
+    getPlace m[1]), (p) ->
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
@@ -107,7 +107,7 @@ server = http.createServer (req, response) ->
     rides.createReadStream gte: "id:" + m[1], lt: "id:" + m[1] + "~"
     .pipe es.mapSync (p) -> JSON.stringify p.value
     .pipe response
-  else if m = req.url.match /(\/[^\/\d]+\/[^\/]+)\/([^\/]+)/ #details
+  else if m = decodeURI(req.url).match /(\/[^\/\d]+\/[^\/]+)\/([^\/]+)/ #details
     console.log "ID " + m[2]
     rides.get "id:" + m[2], (err, ride) ->
       key = m[1] + ">" + ride.route + "#" + m[2]
