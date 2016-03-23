@@ -376,9 +376,7 @@ match = (q) ->
     if q.status == "deleted"
       this.push ride
       visited[r.id] = true
-      if ride.key.match /#del/
-        return next()
-      console.log "     <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id
+      console.log "     <-- UNMATCH " + r.route + ">" + q.route + "#" + q.id + " because DELETED"
       rides.del r.route + ">" + q.route + "#" + q.id
       return next()
     visited[r.id] = true
@@ -454,9 +452,10 @@ notifyAbout = (q, after, done) ->
           sock.write JSON.stringify(q) + "\n"
     else if !r.user || Object.keys(r.user) == 0
       console.log "         no socket " + r.route + "#" + r.id
-      console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id + " and remove"
+      console.log "     --> UNMATCH " + q.route + ">" + r.route + "#" + r.id
       rides.del q.route + ">" + r.route + "#" + r.id
-      rides.put new Date().getTime() + r.route, status: "deleted", id: r, time: r.time, route: r.route
+      console.log "PUT DELETE " + new Date().getTime() + r.route
+      rides.put new Date().getTime() + r.route, status: "deleted", id: r.id, time: r.time, route: r.route
       return next null, status: "deleted", id: r.id, time: r.time
     if r.time > after && !r.me && r.status != "private"
       console.log "          send " + r.time + r.route
