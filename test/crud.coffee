@@ -3,11 +3,12 @@ require("./setup") "CRUD", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: rest post ride", (t) ->
-    t.plan 4
+    t.plan 5
     token = "abc"
     test.auth token, null, "user foo", () ->
       test.post from: "Berlin", to: "Leipzig", expire: 1000, token, (res) ->
         test.get "/ride/" + res.id, (ride) ->
+          t.ok !(ride.driver && ride.passenger), "only one role in matching"
           t.equal ride.to, "Leipzig", "Ziel passt"
           t.equal ride.from, "Berlin", "Start passt"
           t.equal ride.dist, 187, "Dist passt"
@@ -42,5 +43,4 @@ require("./setup") "CRUD", (test) ->
     token = "abc"
     test.auth token, null, "user foo", () ->
       test.post route: "/Berlin/Berlin", expire: 1000, token, (res) ->
-        console.log JSON.stringify res
         t.ok res.id, "should not crash"

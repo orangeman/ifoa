@@ -20,7 +20,7 @@ require("./setup") "SESSION", (test) ->
         t.equal JSON.parse(msg.data).fail, "ACCESS DENIED"
 
   test ":: two socket same session", (t) ->
-    t.plan 6
+    t.plan 7
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if ride.me && !ride.seats
         t.equal ride.route, "/Berlin/Munich", "me"
@@ -36,6 +36,8 @@ require("./setup") "SESSION", (test) ->
       else
         t.equal ride.route, "/Berlin/Munich"
         t.equal ride.seats, 5, "seats window 1"
+        t.ok !(ride.driver && ride.passenger), "only one role in matching"
+
 
   test ":: two searches same session", (t) ->
     t.plan 9

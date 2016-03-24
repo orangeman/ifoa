@@ -3,7 +3,7 @@ require("./setup") "MATCH", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: search without id", (t) ->
-    t.plan 5
+    t.plan 7
     watcher = null
     user = test.connect {route: "/Berlin/Augsburg", status: "published"}, (ride) ->
       if ride.route == "/Berlin/Augsburg"
@@ -13,6 +13,7 @@ require("./setup") "MATCH", (test) ->
               if r.status != "deleted"
                 t.ok true, "change search"
                 user.send JSON.stringify route: "/Kreuzberg/Augsburg", status: "published"
+                t.ok !(r.driver && r.passenger), "only one role in matching"
               else
                 t.ok true, "notify watcher delete"
             else if r.route == "/Kreuzberg/Augsburg"
@@ -21,3 +22,4 @@ require("./setup") "MATCH", (test) ->
           t.equal ride.status, "deleted", "notify self delete"
       else if ride.route == "/Kreuzberg/Augsburg"
         t.ok ride.me, "search change self"
+        t.ok !(ride.driver && ride.passenger), "only one role in matching"

@@ -3,10 +3,11 @@ require("./setup") "STREAM", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: match self", (t) ->
-    t.plan 4
+    t.plan 5
     test.connect {route: "/", since: 1}, (ride) ->
     test.connect {route: "/Berlin/Leipzig", since: 1}, (r) ->
       t.equal r.route, "/Berlin/Leipzig", "Erkenne Dich selbst"
+      t.ok !(r.driver && r.passenger), "only one role in matching"
       t.equal r.pickup, 0, "Kein Umweg"
       t.equal r.dist, 187, "Distanz"
       t.ok r.me, "Me self"

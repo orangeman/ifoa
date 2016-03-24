@@ -12,6 +12,7 @@ require("./setup") "CLEAN", (test) ->
             u3 = test.connect {route: "/Berlin/Nürnberg", status: "published"}, (r3) ->
               if r3.route == "/Berlin/Munich"
                 if r3.status == "published"
+                  t.ok !(r3.driver && r3.passenger), "only one role in matching"
                   u1.close()
                 else if r3.status = "deleted"
                   t.ok true, "got delete notification"

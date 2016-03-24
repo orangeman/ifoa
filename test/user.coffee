@@ -6,7 +6,7 @@ require("./setup") "USER", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: connect user", (t) ->
-    t.plan 4
+    t.plan 5
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if !ride.user
         t.equal ride.route, "/Berlin/Munich", "me"
@@ -22,10 +22,11 @@ require("./setup") "USER", (test) ->
                 u.send JSON.stringify route: "/Berlin/Munich", id: ride.id
             else
               t.equal r.user.name, "foo", "User Name"
+              t.ok !(r.driver && r.passenger), "only one role in matching"
         ), 300
 
   test ":: simultaneous sessions", (t) ->
-    t.plan 5
+    t.plan 7
     firstLogIn = false
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if !ride.user
@@ -42,9 +43,12 @@ require("./setup") "USER", (test) ->
             else if r.user
               t.equal r.user.name, "foo", "User Name"
               t.equal r.seats, 3, "second session seats"
+              t.ok !(r.driver && r.passenger), "only one role in matching"
         ), 300
       else if ride.seats
         t.equal ride.seats, 3, "first session seats seats"
+        t.ok !(ride.driver && ride.passenger), "only one role in matching"
+
 
   test ":: watch simultaneous sessions", (t) ->
     t.plan 11
