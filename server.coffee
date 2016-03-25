@@ -247,7 +247,7 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       console.log " UPDATE " + ride.route + ">" + ride.route + "#" + r.time
       ride.det = 0
       ride.pickup = 0
-      ride.dropof = 0
+      ride.dropoff = 0
       toUpdate ride
     else
       if r && r.status != "deleted"
