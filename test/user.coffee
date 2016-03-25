@@ -6,13 +6,16 @@ require("./setup") "USER", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: connect user", (t) ->
-    t.plan 5
+    t.plan 8
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if !ride.user
         t.equal ride.route, "/Berlin/Munich", "me"
+        t.ok ride.driver, "match self as driver"
         test.auth user.token, ride.id, "foo"
       else
+        t.ok ride.passenger, "match self as passenger"
         t.equal ride.user.name, "foo", "User Name"
+        t.ok !(ride.driver && ride.passenger), "only one role in matching"
         user.close()
         setTimeout (() ->
           u = test.connect {route: "/Berlin/Munich", id: ride.id}, (r) ->
