@@ -70,7 +70,6 @@ server = http.createServer (req, response) ->
         ), ((ride) -> # UPDATE
           ride.url = q.url || "nadaradada"
           rides.put ride.time + ride.route, ride
-          rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
           cache ride.route
           .pipe notifyAbout ride, 1
           .on "end", () ->
@@ -190,7 +189,6 @@ shoe (sockjs) ->
           (sockets[ride.id] ||= {})[path] = sockjs
         myRide = ride
         rides.put ride.time + ride.route, ride
-        #rides.put ride.route + ">" + ride.route + "#" + ride.id, ride
         cache ride.route
         .pipe notifyAbout ride, 1
       ), ((fail) ->
@@ -405,8 +403,10 @@ match = (q) ->
           r.dropoff_time = dropoff.time
           if detDriver < detPassenger
             r.driver = true
+            delete r.passenger
           else
             r.passenger = true
+            delete r.driver
           console.log "     --> MATCH " + q.route + ">" + r.route + "#" + r.id
           rides.put q.route + ">" + r.route + "#" + r.id, r, (err) =>
             this.push ride
@@ -470,6 +470,13 @@ notifyAbout = (q, after, done) ->
     else
       next()
   .on "end", () ->
+    delete q.det
+    delete q.driver
+    delete q.passenger
+    delete q.pickup
+    delete q.pickup_dist
+    delete q.dropoff
+    delete q.dropoff_dist
     rides.put "id:" + q.id, q
     done latest if done
 
