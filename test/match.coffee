@@ -2,6 +2,20 @@ require("./setup") "MATCH", (test) ->
 
   xtest = (a,b) -> console.log "nix"
 
+  test ":: driver XOR passenger", (t) ->
+    t.plan 5
+    user = test.connect {route: "/Berlin/Nürnberg", status: "published"}, (ride) ->
+      if ride.me
+        if !ride.user
+          t.ok ride.driver, "driver"
+          test.auth user.token, ride.id, "foo"
+        else
+          t.ok ride.passenger, "passenger"
+          refresh = test.connect {route: "/Berlin/Nürnberg", status: "published"}, (r) ->
+            t.ok !(r.driver && r.passenger), "only one role in matching"
+            console.log "GOT " + JSON.stringify r
+          setTimeout (() -> t.ok true, "not found twice"), 500
+
   test ":: search without id", (t) ->
     t.plan 7
     watcher = null
