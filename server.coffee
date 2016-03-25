@@ -415,7 +415,7 @@ match = (q) ->
         next()
   .on "end", () ->
     console.log "     end match until " + latest
-    rides.put q.route + ">" + "#latest", latest
+    rides.put q.route + ">#latest", latest
 
 
 notifyAbout = (q, after, done) ->
@@ -447,6 +447,7 @@ notifyAbout = (q, after, done) ->
       unless q.status == "deleted"
         console.log "     <-- MATCH " + r.route + ">" + q.route + "#" + q.id
         rides.put r.route + ">" + q.route + "#" + q.id, q
+        rides.put r.route + ">#latest", q.time
       if r.id == q.id
         q.me = true
         for p, sock of socks
