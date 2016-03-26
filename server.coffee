@@ -120,7 +120,7 @@ server = http.createServer (req, response) ->
       response.writeHead 200, "Content-Type": "application/json"
       cc = cache(decodeURI m[1]).pipe es.map (r, cb) ->
         return cb() if r.key.match /#latest/
-        console.log "JSON from cache " + r.route + "#" + r.id
+        console.log "JSON from cache " + r.value.route + "#" + r.value.id
         cb null, r.value
       if req.headers.accept == "application/json"
         cc.pipe es.writeArray (err, rides) ->
