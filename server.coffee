@@ -117,13 +117,13 @@ server = http.createServer (req, response) ->
     console.log "\nGET" + req.url + "  " +  req.connection.remoteAddress + "   " + m[1]
     console.log "header " + req.headers.accept
     if req.headers.accept && req.headers.accept.match /json/
-      console.log "JSON"
       response.writeHead 200, "Content-Type": "application/json"
       cc = cache(decodeURI m[1]).pipe es.map (r, cb) ->
         return cb() if r.key.match /#latest/
         cb null, r.value
       if req.headers.accept == "application/json"
         cc.pipe es.writeArray (err, rides) ->
+          console.log "JSON from cache " + rides.length
           response.end JSON.stringify rides
       else
         cc.pipe JSONStream.stringify(false)
