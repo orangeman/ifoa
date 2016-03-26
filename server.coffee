@@ -127,6 +127,9 @@ server = http.createServer (req, response) ->
           response.end JSON.stringify rides
       else
         cc.pipe JSONStream.stringify(false)
+        .pipe es.map (rr, cb) ->
+          console.log "JSON from cache " + rr.route + "#" + rr.id
+          cb null, rr
         .pipe response
     else
       response.writeHead 200, "Content-Type": "text/html"
