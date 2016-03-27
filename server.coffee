@@ -87,7 +87,7 @@ server = http.createServer (req, response) ->
     .pipe response
   else if m = decodeURI(req.url).match /path\/([^\/\d]*)\/([^\/]*)/
     getPath m[1], m[2], (d) ->
-      console.log "PATH NOT FOUND " + d.err if d.err
+      return response.end "PATH NOT FOUND " + d.err if d.err
       response.writeHead 200,
         "Content-Type": "application/json"
         "Access-Control-Allow-Origin": "*"
@@ -95,11 +95,14 @@ server = http.createServer (req, response) ->
       response.end d.path
   else if m = decodeURI(req.url).match /place\/([^\/\d]*)/
     getPlace m[1], (p) ->
-      response.writeHead 200,
-        "Content-Type": "application/json"
-        "Access-Control-Allow-Origin": "*"
-        "Cache-Control": "public, max-age=31536000"
-      response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
+      if !p || !p.latitude
+        return response.end "PLACE NOT FOUND"
+      else
+        response.writeHead 200,
+          "Content-Type": "application/json"
+          "Access-Control-Allow-Origin": "*"
+          "Cache-Control": "public, max-age=31536000"
+        response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"
@@ -120,7 +123,7 @@ server = http.createServer (req, response) ->
       response.writeHead 200, "Content-Type": "application/json"
       cc = cache(decodeURI m[1]).pipe es.map (r, cb) ->
         return cb() if r.key.match /#latest/
-        console.log "JSON from cache " + r.value.route + "#" + r.value.id
+        console.log "   + JSON from cache " + r.value.route + "#" + r.value.id
         cb null, r.value
       if req.headers.accept == "application/json"
         cc.pipe es.writeArray (err, rides) ->
