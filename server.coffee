@@ -147,13 +147,14 @@ server = http.createServer (req, response) ->
       "Access-Control-Allow-Origin": "*"
     response.end ""
   else if q = req.url.match /q=(.*)/
+    lang = req.headers["accept-language"].match(/(cs|de|en)/)[1]
+    console.log lang
     response.writeHead 200,
       "Content-Type": "text/plain"
       "Access-Control-Allow-Origin": "*"
-      "Cache-Control": "public, max-age=86400" # day
-    suggest(decodeURI(q[1]))
-    .pipe es.writeArray (e, a) ->
-      response.end a.join ","
+      #"Cache-Control": "public, max-age=86400" # day
+    suggest(lang, decodeURI(q[1]))
+    .pipe response
   else
     ecstatic req, response
 
@@ -486,8 +487,7 @@ notifyAbout = (q, after, done) ->
     done latest if done
 
 names = level "./data/names"
-suggest = (text) ->
+suggest = (lang, text) ->
   text = text.trim().toUpperCase()
-  names.createReadStream(start: text + ":999", end: text, reverse: true)
-  .pipe es.mapSync (p) -> p.key.split("!")[1]
-  #.pipe es.join ","
+  names.createReadStream(start: "#{lang}#{text}:", end: "#{lang}#{text}:~")
+  .pipe es.mapSync (p) -> p.value
