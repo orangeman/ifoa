@@ -21,21 +21,21 @@ lookup = (k, from, to, cb) ->
       else # tmp legacy hack
         cb dist: parseInt(d), time: Math.floor(parseInt(d) * 0.6), route: "/#{from}/#{to}"
     else
-      graphhop k, from, to, cb, (d) ->
+      graphhop k, from, to, cb, lookup, (d) ->
         console.log "ROUTE NOT FOUND " + d.err if d.err
         d.route = "/#{from}/#{to}"
         console.log "ROUTE NOW #{d.route}"
         cb d
 
-graphhop = (k, from, to, cb, done) ->
+graphhop = (k, from, to, cb, next, done) ->
   place from, (orig) ->
     return cb dist: 99999999, err: from if !orig
     if from.toUpperCase() != (f = orig.name).toUpperCase()
-      return lookup key(f, to), f, to, cb
+      return next key(f, to), f, to, cb
     place to, (dest) ->
       return cb dist: 99999999, err: to if !dest
       if to.toUpperCase() != (t = dest.name).toUpperCase()
-        return lookup key(from, t), from, t, cb
+        return next key(from, t), from, t, cb
       gh.dist orig, dest, (d) ->
         if !d.err
           dists.put key(orig.name, dest.name), d.dist + "|" + d.time
@@ -48,12 +48,14 @@ module.exports.place = place = (id, cb) ->
     cb (JSON.parse(p) if p)
 
 module.exports.path = (from, to, cb) ->
-  k = key from, to
+  lookupPath key(from, to), from, to, cb
+
+lookupPath = (k, from, to, cb) ->
   paths.get k, (err, path) ->
     unless err
       cb path: path
     else
-      graphhop k, from, to, (d) ->
+      graphhop k, from, to, cb, lookupPath, (d) ->
         cb d
 
 module.exports.lookup = (from, to, cb) ->

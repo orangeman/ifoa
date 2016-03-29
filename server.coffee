@@ -102,7 +102,7 @@ server = http.createServer (req, response) ->
           "Content-Type": "application/json"
           "Access-Control-Allow-Origin": "*"
           "Cache-Control": "public, max-age=31536000"
-        response.end JSON.stringify [parseFloat(p.latitude), parseFloat(p.longitude)]
+        response.end JSON.stringify p
   else if m = req.url.match /ride\/(.*)/
     console.log "ID = " + m[1]
     response.writeHead 200, "Content-Type": "application/json"
