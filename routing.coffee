@@ -1,7 +1,7 @@
 level = require "level"
 dists = level "./data/dist"
 paths = level "./data/path"
-places = level "./data/places"
+places = level "./data/place"
 gh = require "./graphhopper"
 log = require("fs").createWriteStream("lol.log", flags: "a")
 
@@ -17,23 +17,31 @@ lookup = (k, from, to, cb) ->
     unless err
       s = d.split "|"
       if s.length == 2
-        cb dist: parseInt(s[0]), time: parseInt(s[1])
+        cb dist: parseInt(s[0]), time: parseInt(s[1]), route: "/#{from}/#{to}"
       else # tmp legacy hack
-        cb dist: parseInt(d), time: Math.floor(parseInt(d) * 0.6)
+        cb dist: parseInt(d), time: Math.floor(parseInt(d) * 0.6), route: "/#{from}/#{to}"
     else
-      graphhop k, from, to, (d) ->
+      graphhop k, from, to, cb, (d) ->
         console.log "ROUTE NOT FOUND " + d.err if d.err
+        d.route = "/#{from}/#{to}"
+        console.log "ROUTE NOW #{d.route}"
         cb d
 
-graphhop = (k, from, to, cb) ->
+graphhop = (k, from, to, cb, done) ->
   place from, (orig) ->
     return cb dist: 99999999, err: from if !orig
+    if from.toUpperCase() != (f = orig.name).toUpperCase()
+      return lookup key(f, to), f, to, cb
     place to, (dest) ->
       return cb dist: 99999999, err: to if !dest
+      if to.toUpperCase() != (t = dest.name).toUpperCase()
+        return lookup key(from, t), from, t, cb
       gh.dist orig, dest, (d) ->
-        dists.put k, d.dist + "|" + d.time
-        paths.put k, d.path, (e) -> cb d
-        log.write "GH #{k}\n"
+        if !d.err
+          dists.put key(orig.name, dest.name), d.dist + "|" + d.time
+          paths.put key(orig.name, dest.name), d.path, (e) -> done d
+        else done d
+        log.write "GH #{key(orig.name, dest.name)} #{d.err?}\n"
 
 module.exports.place = place = (id, cb) ->
   places.get id.toUpperCase(), (e, p) ->

@@ -13,7 +13,6 @@ require("./setup") "MATCH", (test) ->
           t.ok ride.passenger, "passenger"
           refresh = test.connect {route: "/Berlin/Nürnberg", status: "published"}, (r) ->
             t.ok !(r.driver && r.passenger), "only one role in matching"
-            console.log "GOT " + JSON.stringify r
           setTimeout (() -> t.ok true, "not found twice"), 500
 
   test ":: search without id", (t) ->

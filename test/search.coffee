@@ -15,7 +15,7 @@ require("./setup") "SEARCH", (test) ->
       test.connect {route: "/Berlin/Leipzig", since: 1}, (r) ->
         if r.me
           test.find "/Berlin/Munich/" + r.id, (match) ->
-            t.equal match.det, 30, "Umweg 30km"
+            t.equal match.det, 35, "Umweg 35km"
             t.ok !(match.driver && match.passenger), "only one role in matching"
 
 
@@ -33,6 +33,6 @@ require("./setup") "SEARCH", (test) ->
           t.ok !(rides[0].driver && rides[0].passenger), "only one role in matching"
           test.post from: "Berlin", to: "Munich", expire: 1000, token, (res2) ->
             test.find "/Berlin/Munich", (rides2) ->
-              t.equal rides2[0].det, 30, "30km Umweg"
+              t.equal rides2[0].det, 35, "35km Umweg"
               t.equal rides2.length, 2, "Zwei Treffer"
               t.ok !(rides2[0].driver && rides2[0].passenger), "only one role in matching"

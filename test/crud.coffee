@@ -11,7 +11,7 @@ require("./setup") "CRUD", (test) ->
           t.ok !(ride.driver && ride.passenger), "only one role in matching"
           t.equal ride.to, "Leipzig", "Ziel passt"
           t.equal ride.from, "Berlin", "Start passt"
-          t.equal ride.dist, 187, "Dist passt"
+          t.equal ride.dist, 191, "Dist passt"
           setTimeout (() ->
             test.get "/ride/" + res.id, (ride) ->
               t.equal ride.status, "deleted", "Fahrt Expired"
@@ -28,6 +28,17 @@ require("./setup") "CRUD", (test) ->
         t.equal ride.status, "published", "published"
         t.equal ride.route, "/Berlin/Leipzig", "route"
         t.deepEqual ride.user, user, "user assigned"
+
+  test ":: alternate names", (t) ->
+    t.plan 3
+    token = "abc"
+    test.auth token, null, "user foo", () ->
+      test.post route: "/Berlin/München", expire: 1000, token, (res) ->
+        t.equal res.route, "/Berlin/Munich", "Munich as key for München"
+        test.post route: "/Wien/Leipzig", expire: 1000, token, (rr) ->
+          t.equal rr.route, "/Vienna/Leipzig", "Vienna as key for Wien"
+          test.post route: "/Řezno/Cologne", expire: 1000, token, (r) ->
+            t.equal r.route, "/Regensburg/Köln", "Rezno/Cologne"
 
   test ":: unknown route", (t) ->
     t.plan 2

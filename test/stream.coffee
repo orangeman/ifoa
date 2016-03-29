@@ -9,7 +9,7 @@ require("./setup") "STREAM", (test) ->
       t.equal r.route, "/Berlin/Leipzig", "Erkenne Dich selbst"
       t.ok !(r.driver && r.passenger), "only one role in matching"
       t.equal r.pickup, 0, "Kein Umweg"
-      t.equal r.dist, 187, "Distanz"
+      t.equal r.dist, 191, "Distanz"
       t.ok r.me, "Me self"
 
   test ":: match each other", (t) ->
@@ -35,12 +35,12 @@ require("./setup") "STREAM", (test) ->
         test.connect {route: "/Kreuzberg/Leipzig", status: "published"}, (r) ->
           t.fail "shizzo" if r.driver && r.passenger
           if r.route == "/Berlin/Leipzig"
-            t.equal r.det, 3, "Umweg für den Fahrer ist 30km" # 4x
+            t.equal r.det, 2, "Umweg für den Fahrer ist 2km" # 4x
             if r.status == "deleted"
               t.ok true, "deleted"
               user.reconnect {route: "/Berlin/Leipzig", id: r.id, status: "published"}
       else if ride.route == "/Kreuzberg/Leipzig"
-        t.equal ride.det, 3, "Umweg als Mitfahrer ist 30km"
+        t.equal ride.det, 2, "Umweg als Mitfahrer ist 2km"
         user.close()
 
   test ":: update data", (t) ->

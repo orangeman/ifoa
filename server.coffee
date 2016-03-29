@@ -266,6 +266,7 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       lookUp ride.from, ride.to, (d) ->
         return onFail "UNKNOWN ROUTE " + d.err if d.err
         ride.dist_time = d.time
+        ride.route = d.route
         ride.dist = d.dist
         if q.expire
           ride.expire = q.expire
