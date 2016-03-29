@@ -9,7 +9,7 @@ distance = (from, to, done) ->
   request url, (err, resp, page) ->
     if err
       console.log "GRAPHHOPPER " + err
-      done null
+      done err: err
     else
       #console.log page
       json = JSON.parse(page)
