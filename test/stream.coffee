@@ -26,6 +26,20 @@ require("./setup") "STREAM", (test) ->
               t.ok true, "not me Leipzig Munich" unless r.me
         ), 300
 
+  test ":: match alternative names", (t) ->
+    t.plan 7
+    test.connect {from: "München", to: "Wien", status: "published"}, (ride) ->
+      if ride.me
+        t.equal ride.route, "/Munich/Vienna", "München/Wien maps to Munich/Vienna"
+        test.connect {from: "Cologne", to: "Vienna", since: 1}, (r) ->
+          if r.me
+            t.equal r.route, "/Köln/Vienna", "Erkenne Dich selbst"
+            t.ok !(r.driver && r.passenger), "only one role in matching"
+            t.equal r.pickup, 0, "Kein Umweg"
+            t.equal r.dist, 897, "Distanz"
+          else
+            t.equal r.dropoff, 0, "/Munich/Vienna", "Wien <-> Vienna dist is 0"
+            t.equal r.to, "Wien", "alternative name Wien"
 
   test ":: match other each", (t) ->
     t.plan 5

@@ -13,6 +13,7 @@ key = (from, to) ->
   else null
 
 lookup = (k, from, to, cb) ->
+  return cb dist: 0, time: 0, path: 0 unless k
   dists.get k, (err, d) ->
     unless err
       s = d.split "|"
