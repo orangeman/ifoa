@@ -34,6 +34,6 @@ dist = (from, to, done) ->
         if d
           done(d)
         else
-          done err: "GRAPHHOPPER FAIL " + from.name+" -> "+to.name
+          done fail: from.name + " -> " + to.name, dist: 9999999, time: 9999999, path: ""
 
 module.exports.dist = dist

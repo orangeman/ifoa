@@ -22,7 +22,7 @@ lookup = (k, from, to, cb) ->
         cb dist: parseInt(d), time: Math.floor(parseInt(d) * 0.6), route: "/#{from}/#{to}"
     else
       graphhop k, from, to, cb, lookup, (d) ->
-        console.log "ROUTE NOT FOUND " + d.err if d.err
+        console.log "ROUTE NOT FOUND " + d.fail if d.fail
         d.route = "/#{from}/#{to}"
         console.log "ROUTE NOW #{d.route}"
         cb d
