@@ -94,6 +94,8 @@ server = http.createServer (req, response) ->
         #"Cache-Control": "public, max-age=31536000"
       response.end d.path
   else if m = decodeURI(req.url).match /place\/([^\/\d]*)/
+    lang = req.headers["accept-language"]?.match(/(cs|de|en)/)[1] || "en"
+    console.log lang
     getPlace m[1], (p) ->
       if !p || !p.latitude
         return response.end "PLACE NOT FOUND"

@@ -52,6 +52,7 @@ module.exports.path = (from, to, cb) ->
   lookupPath key(from, to), from, to, cb
 
 lookupPath = (k, from, to, cb) ->
+  return cb dist: 0, time: 0, path: 0 unless k
   paths.get k, (err, path) ->
     unless err
       cb path: path
