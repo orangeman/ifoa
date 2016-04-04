@@ -19,6 +19,7 @@ render = require "./ride"
 nextTime = 9999999999999999
 EXPIRE = 180 * 1000
 
+process.setMaxListeners 0
 
 server = http.createServer (req, response) ->
   console.log req.url
@@ -57,6 +58,7 @@ server = http.createServer (req, response) ->
       if m = req.url.match /ride\/(.+)/
         console.log "ride ID = " + m[1]
         q.id = m[1]
+      q.id = q.guid if q.guid
       post q, u,
         ((ride) -> # INSERT
           ride.url = q.url || "nadaradada"
@@ -221,7 +223,7 @@ post = (q, u, toInsert, toUpdate, onFail) ->
   ride = null
   find q, (r) ->
     if !r
-      ride = id: uid(), user: u
+      ride = id: q.id || uid(), user: u
     else
       console.log " EXISTING version " + r.time + "  " + r.route + "  " + r.status + " " + JSON.stringify r.user
       if r.user && Object.keys(r.user).length > 0

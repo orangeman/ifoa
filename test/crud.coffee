@@ -17,6 +17,19 @@ require("./setup") "CRUD", (test) ->
               t.equal ride.status, "deleted", "Fahrt Expired"
             ), 1000
 
+  test ":: proxy post ride with guid", (t) ->
+    t.plan 4
+    token = "ABC"
+    user = name: "Sepp"
+    test.connect {route: "/Berlin/Munich"}, (ride) ->
+      if ride.me
+        test.post guid: "abc42", from: "Berlin", to: "Leipzig", status: "published", user: user, token, (res) ->
+      else
+        t.equal ride.id, "abc42", "guid"
+        t.equal ride.status, "published", "published"
+        t.equal ride.route, "/Berlin/Leipzig", "route"
+        t.deepEqual ride.user, user, "user assigned"
+
   test ":: proxy post ride", (t) ->
     t.plan 3
     token = "ABC"
