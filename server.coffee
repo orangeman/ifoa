@@ -181,6 +181,11 @@ shoe (sockjs) ->
       console.log " NO SESSION"
       return sockjs.write JSON.stringify(fail: "ACCESS DENIED") + "\n"
     console.log " USER " + JSON.stringify user[session] + "  SESSION " + session
+    if q.msg
+      q.from = myRide?.id
+      for p, sock of (sockets[q.to] || {})
+        sock.write JSON.stringify q
+      return
     q.id = myRide.id if !q.id && myRide && myRide.id
     post q, user[session] || {},
       ((ride) -> # INSERT
