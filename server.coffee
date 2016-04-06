@@ -202,6 +202,9 @@ shoe (sockjs) ->
         .pipe notifyAbout ride, 1
       ), ((fail) ->
         console.log fail
+        if !myRide && q.id
+          (sockets[q.id] ||= {})[path] = sockjs
+          myRide = id: q.id
         sockjs.write JSON.stringify(fail: fail) + "\n"
       )
   sockjs.on "close", () ->

@@ -29,7 +29,7 @@ require("./setup") "USER", (test) ->
         ), 300
 
   test ":: simultaneous sessions", (t) ->
-    t.plan 7
+    t.plan 9
     firstLogIn = false
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if !ride.user
@@ -44,9 +44,12 @@ require("./setup") "USER", (test) ->
               test.auth u.token, ride.id, "foo", () ->
                 u.send JSON.stringify id: ride.id, seats: 3
             else if r.user
-              t.equal r.user.name, "foo", "User Name"
-              t.equal r.seats, 3, "second session seats"
               t.ok !(r.driver && r.passenger), "only one role in matching"
+              if !r.seats
+                t.equal r.user.name, "foo", "notify self about auth update"
+              else
+                t.equal r.user.name, "foo", "User Name"
+                t.equal r.seats, 3, "second session seats"
         ), 300
       else if ride.seats
         t.equal ride.seats, 3, "first session seats seats"
@@ -54,7 +57,7 @@ require("./setup") "USER", (test) ->
 
 
   test ":: watch simultaneous sessions", (t) ->
-    t.plan 11
+    t.plan 12
     u = null
     firstLogIn = false
     secondLogIn = false
@@ -82,6 +85,9 @@ require("./setup") "USER", (test) ->
                         t.equal r.fail, "ACCESS DENIED", "no access"
                         test.auth u.token, ride.id, "foo"
                       else if !refreshed
+                        if !r.seats
+                          t.equal r.user.name, "foo", "notify self about auth update"
+                          return
                         t.equal r.seats, 3, "second session seats"
                         refreshed = true
                         setTimeout (() ->

@@ -18,13 +18,21 @@ require("./setup") "CRUD", (test) ->
             ), 1000
 
   test ":: proxy post ride with guid", (t) ->
-    t.plan 4
+    t.plan 7
     token = "ABC"
     user = name: "Sepp"
     test.connect {route: "/Berlin/Munich"}, (ride) ->
       if ride.me
         test.post guid: "abc42", from: "Berlin", to: "Leipzig", status: "published", user: user, token, (res) ->
-      else
+          test.connect id: res.id, (r) -> # edit link browser connect
+            if r.fail
+              t.equal r.fail, "ACCESS DENIED", "no edit ride with user without auth"
+              test.post guid: "abc42", seats: 3, user: user, token, (re) ->
+            else
+              t.equal r.id, "abc42", "get updates even without auth"
+              t.equal r.seats, 3, "notify self about seats update"
+
+      else if !ride.seats
         t.equal ride.id, "abc42", "guid"
         t.equal ride.status, "published", "published"
         t.equal ride.route, "/Berlin/Leipzig", "route"
