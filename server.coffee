@@ -205,11 +205,11 @@ shoe (sockjs) ->
         rides.put ride.time + ride.route, ride
         cache ride.route
         .pipe notifyAbout ride, 1
-      ), ((fail) ->
+      ), ((fail, ride) ->
         console.log fail
         if !myRide && q.id
           (sockets[q.id] ||= {})[path] = sockjs
-          myRide = id: q.id
+          myRide = ride
         sockjs.write JSON.stringify(fail: fail) + "\n"
       )
   sockjs.on "close", () ->
@@ -218,7 +218,7 @@ shoe (sockjs) ->
       console.log " USER " + JSON.stringify myRide.user
       console.log " SUSSER " + JSON.stringify user[session]
       delete sockets[myRide.id][path]
-      if !user[session] || Object.keys(user[session]).length == 0
+      if (!user[session] || Object.keys(user[session]).length == 0) && !myRide.user
         console.log  " NO USER"
         remove myRide
         console.log "DELETE " +  myRide.time + myRide.route
@@ -236,7 +236,7 @@ post = (q, u, toInsert, toUpdate, onFail) ->
       console.log " EXISTING version " + r.time + "  " + r.route + "  " + r.status + " " + JSON.stringify r.user
       if r.user && Object.keys(r.user).length > 0
         if (true for id,v of r.user when u[id]).length == 0
-          return onFail "ACCESS DENIED"
+          return onFail "ACCESS DENIED", r
       ride = r
       if q.user
         for id,v of q.user
@@ -270,13 +270,13 @@ post = (q, u, toInsert, toUpdate, onFail) ->
         ride.status = "updated"
       ride.route = q.route if q.route
       if !ride.route
-        return onFail "NO ROUTE"
+        return onFail "NO ROUTE", ride
       m = ride.route.match /\/(.*)\/(.*)/
       return unless m
       ride.from = m[1]
       ride.to = m[2]
       lookUp ride.from, ride.to, (d) ->
-        return onFail "UNKNOWN ROUTE " + d.err if d.err
+        return onFail "UNKNOWN ROUTE " + d.err, ride if d.err
         ride.route = d.route if d.route
         ride.dist_time = d.time
         ride.dist = d.dist

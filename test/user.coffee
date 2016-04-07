@@ -6,7 +6,7 @@ require("./setup") "USER", (test) ->
   xtest = (a,b) -> console.log "nix"
 
   test ":: connect user", (t) ->
-    t.plan 8
+    t.plan 10
     user = test.connect {route: "/Berlin/Munich", since: 1}, (ride) ->
       if !ride.user
         t.equal ride.route, "/Berlin/Munich", "me"
